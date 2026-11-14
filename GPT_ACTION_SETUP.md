@@ -1,6 +1,6 @@
-# 設定 Mason GPT Action（一次設定）
+# 進階：設定 Mason GPT Action（選用）
 
-> 一般 GPT 只靠貼上分享網址，無法保證會發送 HTTP POST。請先建立一個支援 Actions 的自訂 GPT；之後每部影片仍只需要一個 Mason 分享網址。
+> **目前不需要設定這個功能。** Mason 分享頁已內建「貼上分析結果 → 匯入 Notion」，不需要 GPT Builder。以下僅供未來帳戶支援自訂 GPT Actions、且希望完全自動 POST 時參考。
 
 ## 1. 建立 Action
 
