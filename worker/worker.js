@@ -1,5 +1,5 @@
 const DATA_SOURCE_ID="418c88fc-35de-814c-be2e-000b30e4594d";
-const NOTION_VERSION="2022-06-28";
+const NOTION_VERSION="2025-09-03";
 const cors={ "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Methods":"GET,POST,OPTIONS", "Access-Control-Allow-Headers":"Content-Type" };
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{"Content-Type":"application/json; charset=utf-8",...cors}});
 function videoId(value){let u;try{u=new URL(value)}catch{throw Error("網址格式不正確。")}let id="";if(u.hostname.includes("youtu.be"))id=u.pathname.split("/").filter(Boolean)[0]||"";else if(u.pathname==="/watch")id=u.searchParams.get("v")||"";else{const p=u.pathname.split("/").filter(Boolean),i=p.findIndex(x=>["shorts","embed","live"].includes(x));if(i>=0)id=p[i+1]||""}if(!/^[\w-]{11}$/.test(id))throw Error("無法辨識 YouTube Video ID。");return id}
