@@ -6,12 +6,12 @@
 3. Review or edit the transcript; if captions are unavailable, paste the transcript manually.
 4. Enter the website access password and click **保存並產生唯一連結**.
 5. Copy the single share URL and paste it into a GPT.
-6. The same URL supports GET (video metadata + transcript) and POST (GPT Markdown analysis → existing Notion data source).
+6. Configure the Mason GPT Action once using [openapi.yaml](./openapi.yaml). Then paste the single share URL into that configured GPT. The Action reads the transcript with GET and submits the finished Markdown to the same URL with POST.
 
 The Worker stores the share token in KV. The URL is an unguessable bearer capability; anyone who receives it can read the transcript and submit an import. Treat it like a private share link.
 
 ### Important compatibility limitation
-A general-purpose GPT must support sending an HTTP POST request to complete the import. A GPT that can only open/read web pages cannot write to Notion merely by receiving a URL. Notion writes are performed by the Cloudflare Worker using the server-side NOTION_TOKEN; the token is never exposed to the browser or GPT.
+A plain chat session or arbitrary GPT cannot be assumed to send HTTP POST requests. To automate the import, create or edit a GPT that has the Mason Action configured from [openapi.yaml](./openapi.yaml), with Authentication set to None. The Action exposes GET and POST on the same /api/share/{token} endpoint. Once configured, paste the ordinary Mason share URL into that GPT; it can read the transcript and submit the analysis. GPTs without this Action can still read the share link but cannot reliably perform the Notion import. Notion writes are performed by the Cloudflare Worker using the server-side NOTION_TOKEN; the token is never exposed to the browser or GPT.
 
 ## Worker deployment
 Worker name: mason-learning-api
