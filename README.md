@@ -1,39 +1,28 @@
-# Mason Learning Hub — MVP 0.1
+# Mason Learning Hub
 
-## Current flow
+## One-link GPT → Notion workflow
 1. Paste a YouTube or Shorts URL.
-2. Cloudflare Worker attempts to read title, publication date, and public English captions.
-3. Review/edit transcript.
-4. Copy the generated prompt into ChatGPT (no OpenAI API key or API billing).
-5. Paste the ChatGPT lesson back.
-6. Save transcript + lesson into the existing Notion database; duplicate check uses YouTube Video ID.
+2. Mason attempts to load title, publication date, and public English captions.
+3. Review or edit the transcript; if captions are unavailable, paste the transcript manually.
+4. Enter the website access password and click **保存並產生唯一連結**.
+5. Copy the single share URL and paste it into a GPT.
+6. The same URL supports GET (video metadata + transcript) and POST (GPT Markdown analysis → existing Notion data source).
 
-## Important caption limitation
-YouTube has no general public official API that guarantees caption downloads for arbitrary third-party videos. This Worker reads YouTube web-player caption tracks when accessible. YouTube may change or block this endpoint, and some videos have no English captions. This is best-effort only. If it fails, paste the transcript from YouTube Gemini.
+The Worker stores the share token in KV. The URL is an unguessable bearer capability; anyone who receives it can read the transcript and submit an import. Treat it like a private share link.
 
-## Deploy the Cloudflare Worker
-1. Create a Cloudflare Worker named `mason-learning-hub-api`.
-2. Upload `worker/worker.js` as the Worker source.
-3. In Worker Settings → Variables and Secrets, add secret `NOTION_TOKEN` containing your Notion integration secret.
-4. Share the existing Notion data source **Mason 英文影片學習紀錄** with that integration.
-5. Test `https://YOUR-WORKER.workers.dev/api/health`.
+### Important compatibility limitation
+A general-purpose GPT must support sending an HTTP POST request to complete the import. A GPT that can only open/read web pages cannot write to Notion merely by receiving a URL. Notion writes are performed by the Cloudflare Worker using the server-side NOTION_TOKEN; the token is never exposed to the browser or GPT.
 
-## Deploy GitHub Pages
-1. In `app.js`, replace `https://YOUR-WORKER.workers.dev` with your deployed Worker URL.
-2. Repository Settings → Pages → Deploy from branch → `main` → `/(root)`.
-3. Wait for the Pages build. The expected address is `https://yuanting0117a.github.io/mason-learning-hub/`.
+## Worker deployment
+Worker name: mason-learning-api
+Source: worker/worker.js
+Required bindings: LESSONS KV, APP_PASSWORD secret, NOTION_TOKEN secret.
+Legacy GPT_READ_KEY may remain configured for backwards compatibility with /api/pending, but the new workflow does not require it.
 
 ## Existing Notion data source
-Data source ID: `418c88fc-35de-814c-be2e-000b30e4594d`.
-Verified properties:
-- 影片名稱 (title)
-- 影片連結 (url)
-- YouTube 影片 ID (text)
-- 影片發布時間 (date)
-- 學習日期 (date)
-- 學習狀態 (select: 待學習 / 進行中 / 完成)
+Data source ID: 418c88fc-35de-814c-be2e-000b30e4594d
+Properties: 影片名稱、影片連結、YouTube 影片 ID、影片發布時間、學習日期、學習狀態.
+The transcript and GPT analysis are saved as page body sections.
 
-The transcript and ChatGPT analysis are stored as page body sections.
-
-## Security
-Never commit the Notion integration token or put it in browser JavaScript. Keep it only in Cloudflare Worker Secrets. This starter version uses permissive CORS and is intended for personal use; restrict CORS and add authentication/rate limiting before making it a public multi-user service.
+## Caption limitations
+YouTube does not guarantee public caption downloads for arbitrary videos. If Mason cannot retrieve captions, paste the transcript manually.
