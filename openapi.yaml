@@ -1,0 +1,92 @@
+openapi: 3.1.0
+info:
+  title: Mason Learning Hub Import
+  version: 1.0.0
+  description: Read a Mason lesson share link and submit the completed Markdown analysis to the same link for Notion import.
+servers:
+  - url: https://mason-learning-api.yuanting0117a.workers.dev
+paths:
+  /api/share/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        description: The 64-character token from the Mason share URL.
+        schema:
+          type: string
+          pattern: '^[a-f0-9]{64}$'
+    get:
+      operationId: getMasonLesson
+      summary: Read lesson transcript and metadata
+      description: Retrieve the original transcript, video metadata, and import instructions. Preserve the transcript exactly.
+      responses:
+        '200':
+          description: Lesson data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    const: mason-gpt-import
+                  title:
+                    type: string
+                  url:
+                    type: string
+                    format: uri
+                  videoId:
+                    type: string
+                  publishedAt:
+                    type: [string, 'null']
+                  transcript:
+                    type: string
+                  instructions:
+                    type: string
+                  importEndpoint:
+                    type: string
+                    format: uri
+                  imported:
+                    type: boolean
+                required: [type, title, url, videoId, transcript, importEndpoint, imported]
+        '404':
+          description: Share link not found or expired
+    post:
+      operationId: importMasonAnalysis
+      summary: Import analysis into Notion
+      description: Submit the complete Markdown learning analysis. The Worker saves the original transcript and analysis to the user's existing Mason Notion database. Use the same token as the GET request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                analysis:
+                  type: string
+                  minLength: 1
+                  description: Complete Markdown learning notes. Do not alter or replace the source transcript.
+              required: [analysis]
+      responses:
+        '201':
+          description: Imported successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  imported:
+                    type: boolean
+                  notionUrl:
+                    type: [string, 'null']
+                  duplicate:
+                    type: boolean
+        '200':
+          description: Already imported
+        '400':
+          description: Invalid or empty analysis
+        '404':
+          description: Share link not found or expired
+        '500':
+          description: Notion import failed
