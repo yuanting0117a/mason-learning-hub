@@ -10,7 +10,7 @@ $("fetch").onclick=async()=>{
  try{
   const r=await fetch(endpoint("/api/video?url="+encodeURIComponent(url)));
   const d=await r.json();if(!r.ok)throw Error(d.error||"影片資訊讀取失敗");
-  video=d;$("meta").classList.remove("hidden");$("title").textContent=d.title||"未取得";$("published").textContent=d.publishedAt||"未提供";$("vid").textContent=d.videoId||"";
+  video=d;$("meta").classList.remove("hidden");$("title").textContent=d.title||"未取得";$("published").textContent=d.publishedAt?(d.publishedAt+"（"+(d.publishedAtSource||"YouTube") +"）"):"尚未取得（可重新讀取）";$("vid").textContent=d.videoId||"";
   const seen=JSON.parse(localStorage.getItem("mason_prompt_video_ids")||"[]");
   if(seen.includes(d.videoId)){ $("duplicateNotice").textContent="這部影片曾在此瀏覽器產生過 GPT 指令；請 GPT 匯入前再檢查 Notion，避免重複建立。";$("duplicateNotice").classList.remove("hidden");}
   else $("duplicateNotice").classList.add("hidden");
@@ -26,14 +26,14 @@ $("copyTranscript").onclick=async()=>{try{await navigator.clipboard.writeText($(
 $("makePrompt").onclick=()=>{
  const url=$("url").value.trim(),transcript=$("transcript").value.trim(),id=video?.videoId||extractVideoId(url);
  if(!url||!id||!transcript)return status("promptStatus","請確認影片網址有效，且英文逐字稿已填寫。","error");
- const title=video?.title||"未取得",published=video?.publishedAt||"未提供",canonical=video?.url||url;
+ const title=video?.title||"未取得",published=video?.publishedAt||"尚未取得",publishedSource=video?.publishedAtSource||"未標示",canonical=video?.url||url;
  const prompt=`你是我的英語學習助理。請完成以下工作：先分析影片內容，再使用我已連接的 Notion 工具，將結果新增或更新到既有的 Mason 英文學習資料庫。不要只輸出草稿；請實際執行 Notion 寫入，並在最後回報結果與頁面連結。
 
 ## 影片資料
 - 影片名稱：${title}
 - YouTube 連結：${canonical}
 - YouTube Video ID：${id}
-- 發布日期：${published}
+- 發布日期：${published}\n- 日期來源：${publishedSource}\n- 日期擷取規則：先讀 YouTube 影片頁面 metadata；若未取得，再讀 YouTube RSS；仍無資料才標示「尚未取得」，不可自行猜測。
 
 ## 原始英文逐字稿
 ${transcript}
