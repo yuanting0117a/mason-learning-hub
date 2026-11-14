@@ -1,5 +1,5 @@
 // Replace with your deployed Cloudflare Worker URL.
-const API="https://mason-learning-api.YOUR-SUBDOMAIN.workers.dev";
+const API="https://mason-learning-api.yuanting0117a.workers.dev";
 const $=id=>document.getElementById(id);let video=null;\nconst appPassword=()=>$("appPassword").value.trim();
 function status(id,msg,type=""){const el=$(id);el.textContent=msg;el.className="status "+type}
 function endpoint(path){return API.replace(/\/$/,"")+path}
