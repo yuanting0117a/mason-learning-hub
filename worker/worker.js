@@ -25,7 +25,7 @@ if(u.pathname==="/api/queue"&&req.method==="POST"){
  const shareToken=crypto.randomUUID().replace(/-/g,"")+crypto.randomUUID().replace(/-/g,"");item.shareToken=shareToken;
  await env.LESSONS.put(key,JSON.stringify(item));await env.LESSONS.put("share:"+shareToken,JSON.stringify({videoId:id,createdAt:item.createdAt}));return reply({saved:true,videoId:id,shareUrl:"https://mason-learning-api.yuanting0117a.workers.dev/api/share/"+shareToken},201)
 }
-const shareMatch=u.pathname.match(/^\\/api\\/share\\/([a-f0-9]{64})$/);
+const shareMatch=u.pathname.match(/^\/api\/share\/([a-f0-9]{64})$/);
 if(shareMatch&&req.method==="GET"){
  if(!env.LESSONS)return reply({error:"待整理資料庫尚未綁定"},503);
  const ref=await env.LESSONS.get("share:"+shareMatch[1]);if(!ref)return reply({error:"分享連結不存在或已失效"},404);
