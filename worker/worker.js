@@ -28,7 +28,25 @@ const form=document.getElementById("importForm");if(form)form.addEventListener("
 }
 const rt=s=>[{type:"text",text:{content:String(s).slice(0,1900)}}];
 function blocks(title,content){const out=[{object:"block",type:"heading_2",heading_2:{rich_text:rt(title)}}];for(const raw of String(content||"").split(/\r?\n/)){const line=raw.trim();if(!line)continue;let type="paragraph",value=line;if(/^### /.test(line)){type="heading_3";value=line.slice(4)}else if(/^##? /.test(line)){type="heading_2";value=line.replace(/^##? /,"")}else if(/^[-*] /.test(line)){type="bulleted_list_item";value=line.slice(2)}else if(/^\d+[.)] /.test(line)){type="numbered_list_item";value=line.replace(/^\d+[.)] /,"")}for(let i=0;i<value.length;i+=1800)out.push({object:"block",type,[type]:{rich_text:rt(value.slice(i,i+1800))}})}return out}
-async function save(env,b){const v=b.video||await videoInfo(b.url),id=v.videoId||videoId(b.url),old=await duplicate(env,id);if(old)return{duplicate:true,url:old.url};const props={"影片名稱":{title:rt(v.title||"Mason "+id)},"影片連結":{url:v.url||b.url},"YouTube 影片 ID":{rich_text:rt(id)},"學習狀態":{select:{name:"進行中"}},"學習日期":{date:{start:new Date().toISOString().slice(0,10)}}};if(v.publishedAt){const d=new Date(v.publishedAt);if(!isNaN(d.getTime()))props["影片發布時間"]={date:{start:d.toISOString()}}}const children=[...blocks("影片資訊","影片連結："+(v.url||b.url)+"\nYouTube Video ID："+id+"\n發布時間："+(v.publishedAt||"未取得")),...blocks("英文逐字稿",b.transcript),...blocks("ChatGPT 學習整理",b.analysis)];const page=await notion(env,"/pages",{parent:{type:"data_source_id",data_source_id:DATA_SOURCE_ID},properties:props,children:children.slice(0,100)});return{url:page.url,id:page.id}}
+async function appendBlocks(env,pageId,children){
+ for(let i=0;i<children.length;i+=100){
+  await notion(env,"/blocks/"+pageId+"/children",{children:children.slice(i,i+100)});
+ }
+}
+async function save(env,b){
+ const v=b.video||await videoInfo(b.url),id=v.videoId||videoId(b.url),old=await duplicate(env,id);
+ if(old){
+  const additions=blocks("ChatGPT 學習整理",b.analysis);
+  await appendBlocks(env,old.id,additions);
+  return{duplicate:true,url:old.url,id:old.id};
+ }
+ const props={"影片名稱":{title:rt(v.title||"Mason "+id)},"影片連結":{url:v.url||b.url},"YouTube 影片 ID":{rich_text:rt(id)},"學習狀態":{select:{name:"進行中"}},"學習日期":{date:{start:new Date().toISOString().slice(0,10)}}};
+ if(v.publishedAt){const d=new Date(v.publishedAt);if(!isNaN(d.getTime()))props["影片發布時間"]={date:{start:d.toISOString()}}}
+ const children=[...blocks("影片資訊","影片連結："+(v.url||b.url)+"\nYouTube Video ID："+id+"\n發布時間："+(v.publishedAt||"未取得")),...blocks("英文逐字稿",b.transcript),...blocks("ChatGPT 學習整理",b.analysis)];
+ const page=await notion(env,"/pages",{parent:{type:"data_source_id",data_source_id:DATA_SOURCE_ID},properties:props,children:children.slice(0,100)});
+ if(children.length>100)await appendBlocks(env,page.id,children.slice(100));
+ return{url:page.url,id:page.id};
+}
 export default{async fetch(req,env){if(req.method==="OPTIONS")return new Response(null,{headers:cors});const u=new URL(req.url);try{if((u.pathname==="/api/check"||u.pathname==="/api/save")&&(!env.APP_PASSWORD||req.headers.get("X-App-Password")!==env.APP_PASSWORD))return reply({error:"密碼錯誤或尚未設定 APP_PASSWORD"},401);if(u.pathname==="/api/health")return reply({ok:true,service:"mason-learning-hub"});
 if(u.pathname==="/api/queue"&&req.method==="POST"){
  if(!env.APP_PASSWORD||req.headers.get("X-App-Password")!==env.APP_PASSWORD)return reply({error:"網站存取密碼錯誤或尚未設定"},401);
