@@ -24,7 +24,16 @@ $("queue").onclick=async()=>{
  const url=$("url").value.trim(),transcript=$("transcript").value.trim();
  if(!url||!transcript)return status("queueStatus","請確認影片網址與英文逐字稿都已填寫。","error");
  if(!appPassword())return status("queueStatus","請先輸入網站存取密碼。","error");
- $("queue").disabled=true;status("queueStatus","正在保存到待整理區……");
- try{const r=await fetch(endpoint("/api/queue"),{method:"POST",headers:{"Content-Type":"application/json","X-App-Password":appPassword()},body:JSON.stringify({url,transcript,video})});const d=await r.json();if(!r.ok)throw Error(d.error||"保存失敗");if(d.shareUrl){$("shareBox").classList.remove("hidden");$("shareLink").href=d.shareUrl;$("shareLink").textContent=d.shareUrl;}status("queueStatus",d.duplicate?"這部影片已在待整理區，已重新提供分享連結。":"影片已保存，GPT／Notion 共用連結已產生。","ok");}catch(e){status("queueStatus",e.message,"error")}finally{$("queue").disabled=false}
+ $("queue").disabled=true;$("shareBox").classList.add("hidden");status("queueStatus","正在保存影片並建立唯一分享連結……");
+ try{
+  const r=await fetch(endpoint("/api/queue"),{method:"POST",headers:{"Content-Type":"application/json","X-App-Password":appPassword()},body:JSON.stringify({url,transcript,video})});
+  const d=await r.json().catch(()=>({error:"伺服器回傳的內容不是有效 JSON"}));
+  if(!r.ok)throw Error(d.error||("保存失敗（HTTP "+r.status+"）"));
+  if(typeof d.shareUrl!=="string"||!/^https:\/\/mason-learning-api\.yuanting0117a\.workers\.dev\/api\/share\/[a-f0-9]{64}$/.test(d.shareUrl)){
+   throw Error("影片已送達伺服器，但伺服器沒有回傳有效的分享網址。請重新整理後再試；若仍發生，代表 Cloudflare Worker 尚未更新完成。");
+  }
+  $("shareLink").href=d.shareUrl;$("shareLink").textContent=d.shareUrl;$("shareBox").classList.remove("hidden");
+  status("queueStatus",d.duplicate?"這部影片已存在，已重新產生分享連結。":"影片已保存，分享連結已成功產生。","ok");
+ }catch(e){status("queueStatus",e.message,"error")}finally{$("queue").disabled=false}
 };
 $("copyShare").onclick=async()=>{try{await navigator.clipboard.writeText($("shareLink").href);status("queueStatus","GPT／Notion 共用連結已複製。","ok")}catch{status("queueStatus","複製失敗，請手動複製連結。","error")}};
