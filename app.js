@@ -1,9 +1,9 @@
 const API="https://mason-learning-api.yuanting0117a.workers.dev";
 const $=id=>document.getElementById(id);
-let video=null,feedUrl="";
-const appPassword=()=>$("appPassword").value.trim();
+let video=null;
 const endpoint=path=>API.replace(/\/$/,"")+path;
 function status(id,msg,type=""){const el=$(id);el.textContent=msg;el.className="status "+type}
+function extractVideoId(value){try{const u=new URL(value);if(u.hostname.includes("youtu.be"))return u.pathname.split("/").filter(Boolean)[0]||"";if(u.pathname==="/watch")return u.searchParams.get("v")||"";const p=u.pathname.split("/").filter(Boolean),i=p.findIndex(x=>["shorts","embed","live"].includes(x));return i>=0?p[i+1]||"":""}catch{return""}}
 $("fetch").onclick=async()=>{
  const url=$("url").value.trim();if(!url)return status("status","請先貼上 YouTube 網址。","error");
  $("fetch").disabled=true;status("status","正在讀取影片資訊……");
@@ -11,6 +11,9 @@ $("fetch").onclick=async()=>{
   const r=await fetch(endpoint("/api/video?url="+encodeURIComponent(url)));
   const d=await r.json();if(!r.ok)throw Error(d.error||"影片資訊讀取失敗");
   video=d;$("meta").classList.remove("hidden");$("title").textContent=d.title||"未取得";$("published").textContent=d.publishedAt||"未提供";$("vid").textContent=d.videoId||"";
+  const seen=JSON.parse(localStorage.getItem("mason_prompt_video_ids")||"[]");
+  if(seen.includes(d.videoId)){ $("duplicateNotice").textContent="這部影片曾在此瀏覽器產生過 GPT 指令；請 GPT 匯入前再檢查 Notion，避免重複建立。";$("duplicateNotice").classList.remove("hidden");}
+  else $("duplicateNotice").classList.add("hidden");
   try{
    const tr=await fetch(endpoint("/api/transcript?url="+encodeURIComponent(url)+"&lang=en"));
    const td=await tr.json();if(!tr.ok)throw Error(td.error||"字幕讀取失敗");
@@ -20,20 +23,45 @@ $("fetch").onclick=async()=>{
  }catch(e){status("status",e.message,"error")}finally{$("fetch").disabled=false}
 };
 $("copyTranscript").onclick=async()=>{try{await navigator.clipboard.writeText($("transcript").value);status("status","逐字稿已複製。","ok")}catch{status("status","複製失敗，請手動選取。","error")}};
-$("queue").onclick=async()=>{
- const url=$("url").value.trim(),transcript=$("transcript").value.trim();
- if(!url||!transcript)return status("queueStatus","請確認影片網址與英文逐字稿都已填寫。","error");
- if(!appPassword())return status("queueStatus","請先輸入網站存取密碼。","error");
- $("queue").disabled=true;$("shareBox").classList.add("hidden");status("queueStatus","正在保存影片並建立唯一分享連結……");
- try{
-  const r=await fetch(endpoint("/api/queue"),{method:"POST",headers:{"Content-Type":"application/json","X-App-Password":appPassword()},body:JSON.stringify({url,transcript,video})});
-  const d=await r.json().catch(()=>({error:"伺服器回傳的內容不是有效 JSON"}));
-  if(!r.ok)throw Error(d.error||("保存失敗（HTTP "+r.status+"）"));
-  if(typeof d.shareUrl!=="string"||!/^https:\/\/mason-learning-api\.yuanting0117a\.workers\.dev\/api\/share\/[a-f0-9]{64}$/.test(d.shareUrl)){
-   throw Error("影片已送達伺服器，但伺服器沒有回傳有效的分享網址。請重新整理後再試；若仍發生，代表 Cloudflare Worker 尚未更新完成。");
-  }
-  $("shareLink").href=d.shareUrl;$("shareLink").textContent=d.shareUrl;$("shareBox").classList.remove("hidden");
-  status("queueStatus",d.duplicate?"這部影片已存在，已取回原分享連結。":"影片已保存，分享連結已成功產生。","ok");
- }catch(e){status("queueStatus",e.message,"error")}finally{$("queue").disabled=false}
+$("makePrompt").onclick=()=>{
+ const url=$("url").value.trim(),transcript=$("transcript").value.trim(),id=video?.videoId||extractVideoId(url);
+ if(!url||!id||!transcript)return status("promptStatus","請確認影片網址有效，且英文逐字稿已填寫。","error");
+ const title=video?.title||"未取得",published=video?.publishedAt||"未提供",canonical=video?.url||url;
+ const prompt=`你是我的英語學習助理。請完成以下工作：先分析影片內容，再使用我已連接的 Notion 工具，將結果新增或更新到既有的 Mason 英文學習資料庫。不要只輸出草稿；請實際執行 Notion 寫入，並在最後回報結果與頁面連結。
+
+## 影片資料
+- 影片名稱：${title}
+- YouTube 連結：${canonical}
+- YouTube Video ID：${id}
+- 發布日期：${published}
+
+## 原始英文逐字稿
+${transcript}
+
+## 分析要求
+1. **重要單字與片語**：整理值得學習的字詞、慣用語與搭配詞，附繁體中文意思、語氣／使用情境及自然例句。
+2. **句型與文法**：說明重要句型、文法結構及可替換用法。
+3. **自然度與語域**：指出口語、正式或非正式用法；若有不自然表達，說明原因並提供更自然版本。
+4. **逐字稿校正**：只修正有充分把握的辨識錯誤。以「原文／建議修正／原因」呈現；不確定處標示待確認，不可自行捏造。
+5. **英檢中高級複試應用**：整理可用於口說與寫作的表達、延伸句及主題應用方式。
+6. **複習區**：整理精簡重點，設計小測驗並附答案。
+7. 內容以繁體中文說明，英文例句保留英文；層次清楚、避免灌水，適合日後複習。
+
+## Notion 目標與重複判定（非常重要）
+- 只使用我目前已連接的 Notion 工作區，以及既有的 Mason 英文學習資料庫；**不可建立新資料庫、不可更改資料庫結構或欄位**。
+- 既有資料庫頁面：354c88fc-35de-80e9-a7d8-db882ac36ea1（「主頁」入口）。
+- 既有資料來源 ID：418c88fc-35de-814c-be2e-000b30e4594d。
+- 寫入前必須先讀取資料來源 schema，確認實際欄位名稱與型態。
+- **先用 YouTube 影片 ID（${id}）對「YouTube 影片 ID」欄位做精確查詢**；若查不到，再用標準化影片網址（${canonical}）對「影片連結」欄位查詢。必要時再比對標題，但標題只能輔助，不能單獨當成確定重複的依據。
+- 若找到相同 Video ID 或相同影片網址：判定為重複，**更新既有那一筆頁面**，把本次完整學習整理補進原頁面適當位置；不要建立第二筆，也不要覆蓋或刪除原有內容。
+- 若已存在多筆相同影片：不要自行新增；回報找到的重複頁面，選擇最合適的一筆更新，並說明有多筆重複。
+- 只有在精確查詢確認沒有相同 Video ID／網址時，才建立新頁面，並沿用既有資料庫欄位與既有頁面內容格式。
+- 若 Notion 工具無法查詢資料來源、沒有編輯權限或寫入失敗，請明確回報，不可假裝完成，也不可改用網站舊匯入 API。
+- 寫入後重新讀取或檢查結果，確認內容確實存在，再回報「新增」或「更新」、頁面網址，以及是否判定為重複。
+
+現在請開始分析並執行。不要要求我把分析結果再貼回 Mason 網站。`;
+ $("prompt").value=prompt;$("promptBox").classList.remove("hidden");
+ const seen=JSON.parse(localStorage.getItem("mason_prompt_video_ids")||"[]");if(!seen.includes(id)){seen.push(id);localStorage.setItem("mason_prompt_video_ids",JSON.stringify(seen.slice(-300)))}
+ status("promptStatus","完整指令已產生。請複製後貼到一般 ChatGPT 對話；GPT 會先檢查 Notion 是否已有同一部影片。","ok");
 };
-$("copyShare").onclick=async()=>{try{await navigator.clipboard.writeText($("shareLink").href);status("queueStatus","分享連結已複製。","ok")}catch{status("queueStatus","複製失敗，請手動複製連結。","error")}};
+$("copyPrompt").onclick=async()=>{try{await navigator.clipboard.writeText($("prompt").value);status("promptStatus","GPT 指令已複製，可以貼到 ChatGPT 執行。","ok")}catch{status("promptStatus","複製失敗，請手動選取指令。","error")}};
