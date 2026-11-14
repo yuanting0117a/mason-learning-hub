@@ -30,7 +30,7 @@ if(shareMatch&&req.method==="GET"){
  if(!env.LESSONS)return reply({error:"待整理資料庫尚未綁定"},503);
  const ref=await env.LESSONS.get("share:"+shareMatch[1]);if(!ref)return reply({error:"分享連結不存在或已失效"},404);
  const meta=JSON.parse(ref),raw=await env.LESSONS.get("lesson:"+meta.videoId);if(!raw)return reply({error:"影片資料不存在"},404);
- const item=JSON.parse(raw);return reply({type:"mason-gpt-import",title:item.title,url:item.url,videoId:item.videoId,publishedAt:item.publishedAt,transcript:item.transcript,instructions:"請分析這部影片，整理英文學習紀錄（詞彙片語、句型、自然度與語域、逐字稿修正、英檢中高級口說寫作可用表達、複習重點）。完成後，請對本分享網址發送 POST JSON：{\\"analysis\\":\\"完整 Markdown 學習整理\\"}。這會將逐字稿與分析直接匯入使用者既有的 Mason Notion 資料庫。請勿改動或猜測影片逐字稿。",importEndpoint:u.origin+u.pathname,imported:item.status==="imported"});
+ const item=JSON.parse(raw);return reply({type:"mason-gpt-import",title:item.title,url:item.url,videoId:item.videoId,publishedAt:item.publishedAt,transcript:item.transcript,instructions:"請分析這部影片，整理英文學習紀錄（詞彙片語、句型、自然度與語域、逐字稿修正、英檢中高級口說寫作可用表達、複習重點）。完成後，請對本分享網址發送 POST，JSON body 中包含 analysis 欄位與完整 Markdown 學習整理。這會將逐字稿與分析直接匯入使用者既有的 Mason Notion 資料庫。請勿改動或猜測影片逐字稿。",importEndpoint:u.origin+u.pathname,imported:item.status==="imported"});
 }
 if(shareMatch&&req.method==="POST"){
  if(!env.LESSONS||!env.NOTION_TOKEN)return reply({error:"Notion 或 KV 尚未設定"},503);
