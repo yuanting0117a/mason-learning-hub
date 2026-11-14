@@ -27,17 +27,4 @@ $("queue").onclick=async()=>{
  $("queue").disabled=true;status("queueStatus","正在保存到待整理區……");
  try{const r=await fetch(endpoint("/api/queue"),{method:"POST",headers:{"Content-Type":"application/json","X-App-Password":appPassword()},body:JSON.stringify({url,transcript,video})});const d=await r.json();if(!r.ok)throw Error(d.error||"保存失敗");if(d.shareUrl){$("shareBox").classList.remove("hidden");$("shareLink").href=d.shareUrl;$("shareLink").textContent=d.shareUrl;}status("queueStatus",d.duplicate?"這部影片已在待整理區，已重新提供分享連結。":"影片已保存，GPT／Notion 共用連結已產生。","ok");}catch(e){status("queueStatus",e.message,"error")}finally{$("queue").disabled=false}
 };
-async function loadPending(){
- const key=$("gptReadKey").value.trim();if(!key)return status("pendingStatus","請輸入 Cloudflare 的 GPT_READ_KEY。","error");
- $("loadPending").disabled=true;status("pendingStatus","正在讀取待整理資料……");
- try{const r=await fetch(endpoint("/api/pending"),{headers:{"Authorization":"Bearer "+key}});const d=await r.json();if(!r.ok)throw Error(d.error||"讀取失敗");renderPending(d.items||[]);status("pendingStatus","目前有 "+(d.count||0)+" 部待整理影片。","ok");}
- catch(e){status("pendingStatus",e.message,"error");$("pendingList").innerHTML=""}finally{$("loadPending").disabled=false}
-}
-function renderPending(items){
- const root=$("pendingList");root.innerHTML="";
- if(!items.length){root.innerHTML='<p class="empty">目前沒有待整理影片。</p>';return}
- for(const item of items){const card=document.createElement("article");card.className="pending-card";const title=document.createElement("h3");title.textContent=item.title||"未命名影片";const meta=document.createElement("p");meta.className="pending-meta";meta.textContent="建立時間："+(item.createdAt?new Date(item.createdAt).toLocaleString("zh-TW"):"未知");const link=document.createElement("a");link.href=item.url||"#";link.target="_blank";link.rel="noopener";link.textContent="開啟 YouTube 影片 ↗";const details=document.createElement("details");const summary=document.createElement("summary");summary.textContent="查看英文逐字稿";const body=document.createElement("pre");body.textContent=item.transcript||"（沒有逐字稿）";details.append(summary,body);card.append(title,meta,link,details);root.append(card)}
-}
-$("loadPending").onclick=loadPending;$("refreshPending").onclick=loadPending;
-
 $("copyShare").onclick=async()=>{try{await navigator.clipboard.writeText($("shareLink").href);status("queueStatus","GPT／Notion 共用連結已複製。","ok")}catch{status("queueStatus","複製失敗，請手動複製連結。","error")}};
