@@ -28,7 +28,7 @@ $("queue").onclick=async()=>{
  try{
   const r=await fetch(endpoint("/api/queue"),{method:"POST",headers:{"Content-Type":"application/json","X-App-Password":appPassword()},body:JSON.stringify({url,transcript,video})});
   const d=await r.json();if(!r.ok)throw Error(d.error||"保存失敗");
-  feedUrl=endpoint("/api/pending?key="+encodeURIComponent(appPassword()));
+  feedUrl=endpoint("/api/pending?key="+encodeURIComponent($("gptReadKey").value.trim()));
   $("gptLink").href=feedUrl;$("gptLinkBox").classList.remove("hidden");
   status("queueStatus",d.duplicate?"這部影片已在待整理區，沒有重複新增。":"影片網址與逐字稿已保存。","ok");
  }catch(e){status("queueStatus",e.message,"error")}finally{$("queue").disabled=false}
