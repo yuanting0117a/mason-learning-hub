@@ -22,7 +22,24 @@ if(u.pathname==="/api/queue"&&req.method==="POST"){
  const v=b.video||await videoInfo(b.url),id=v.videoId||videoId(b.url),key="lesson:"+id;
  const old=await env.LESSONS.get(key);if(old)return reply({duplicate:true,videoId:id},200);
  const item={videoId:id,url:v.url||b.url,title:v.title||"YouTube "+id,publishedAt:v.publishedAt||null,author:v.author||"",transcript:b.transcript,status:"pending",createdAt:new Date().toISOString()};
- await env.LESSONS.put(key,JSON.stringify(item));return reply({saved:true,videoId:id},201)
+ const shareToken=crypto.randomUUID().replace(/-/g,"")+crypto.randomUUID().replace(/-/g,"");item.shareToken=shareToken;
+ await env.LESSONS.put(key,JSON.stringify(item));await env.LESSONS.put("share:"+shareToken,JSON.stringify({videoId:id,createdAt:item.createdAt}));return reply({saved:true,videoId:id,shareUrl:"https://mason-learning-api.yuanting0117a.workers.dev/api/share/"+shareToken},201)
+}
+const shareMatch=u.pathname.match(/^\\/api\\/share\\/([a-f0-9]{64})$/);
+if(shareMatch&&req.method==="GET"){
+ if(!env.LESSONS)return reply({error:"待整理資料庫尚未綁定"},503);
+ const ref=await env.LESSONS.get("share:"+shareMatch[1]);if(!ref)return reply({error:"分享連結不存在或已失效"},404);
+ const meta=JSON.parse(ref),raw=await env.LESSONS.get("lesson:"+meta.videoId);if(!raw)return reply({error:"影片資料不存在"},404);
+ const item=JSON.parse(raw);return reply({type:"mason-gpt-import",title:item.title,url:item.url,videoId:item.videoId,publishedAt:item.publishedAt,transcript:item.transcript,instructions:"請分析這部影片，整理英文學習紀錄（詞彙片語、句型、自然度與語域、逐字稿修正、英檢中高級口說寫作可用表達、複習重點）。完成後，請對本分享網址發送 POST JSON：{\\"analysis\\":\\"完整 Markdown 學習整理\\"}。這會將逐字稿與分析直接匯入使用者既有的 Mason Notion 資料庫。請勿改動或猜測影片逐字稿。",importEndpoint:u.origin+u.pathname,imported:item.status==="imported"});
+}
+if(shareMatch&&req.method==="POST"){
+ if(!env.LESSONS||!env.NOTION_TOKEN)return reply({error:"Notion 或 KV 尚未設定"},503);
+ const ref=await env.LESSONS.get("share:"+shareMatch[1]);if(!ref)return reply({error:"分享連結不存在或已失效"},404);
+ const meta=JSON.parse(ref),raw=await env.LESSONS.get("lesson:"+meta.videoId);if(!raw)return reply({error:"影片資料不存在"},404);
+ const item=JSON.parse(raw);if(item.status==="imported")return reply({imported:true,duplicate:true,notionUrl:item.notionUrl||null});
+ const b=await req.json();if(typeof b.analysis!=="string"||!b.analysis.trim())return reply({error:"analysis 不可空白"},400);
+ const saved=await save(env,{url:item.url,video:{videoId:item.videoId,url:item.url,title:item.title,publishedAt:item.publishedAt,author:item.author},transcript:item.transcript,analysis:b.analysis});
+ item.status="imported";item.notionUrl=saved.url;item.importedAt=new Date().toISOString();await env.LESSONS.put("lesson:"+meta.videoId,JSON.stringify(item));return reply({imported:true,notionUrl:saved.url,duplicate:!!saved.duplicate},201);
 }
 if(u.pathname==="/api/pending"&&req.method==="GET"){
  if(!env.LESSONS)return reply({error:"待整理資料庫尚未綁定"},503);
