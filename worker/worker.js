@@ -1,6 +1,6 @@
 const DATA_SOURCE_ID="418c88fc-35de-814c-be2e-000b30e4594d";
 const NOTION_VERSION="2025-09-03";
-const cors={ "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Methods":"GET,POST,OPTIONS", "Access-Control-Allow-Headers":"Content-Type, X-App-Password" };
+const cors={ "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Methods":"GET,POST,OPTIONS", "Access-Control-Allow-Headers":"Content-Type, X-App-Password, Authorization" };
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{"Content-Type":"application/json; charset=utf-8",...cors}});
 function videoId(value){let u;try{u=new URL(value)}catch{throw Error("網址格式不正確。")}let id="";if(u.hostname.includes("youtu.be"))id=u.pathname.split("/").filter(Boolean)[0]||"";else if(u.pathname==="/watch")id=u.searchParams.get("v")||"";else{const p=u.pathname.split("/").filter(Boolean),i=p.findIndex(x=>["shorts","embed","live"].includes(x));if(i>=0)id=p[i+1]||""}if(!/^[\w-]{11}$/.test(id))throw Error("無法辨識 YouTube Video ID。");return id}
 function extractObject(s,marker){const p=s.indexOf(marker);if(p<0)return null;const start=s.indexOf("{",p);if(start<0)return null;let depth=0,q=false,e=false;for(let i=start;i<s.length;i++){const c=s[i];if(q){if(e)e=false;else if(c==="\\")e=true;else if(c==='"')q=false;continue}if(c==='"')q=true;else if(c==="{")depth++;else if(c==="}"&&--depth===0){try{return JSON.parse(s.slice(start,i+1))}catch{return null}}}return null}
@@ -16,6 +16,7 @@ function blocks(title,content){const out=[{object:"block",type:"heading_2",headi
 async function save(env,b){const v=b.video||await videoInfo(b.url),id=v.videoId||videoId(b.url),old=await duplicate(env,id);if(old)return{duplicate:true,url:old.url};const props={"影片名稱":{title:rt(v.title||"Mason "+id)},"影片連結":{url:v.url||b.url},"YouTube 影片 ID":{rich_text:rt(id)},"學習狀態":{select:{name:"進行中"}},"學習日期":{date:{start:new Date().toISOString().slice(0,10)}}};if(v.publishedAt){const d=new Date(v.publishedAt);if(!isNaN(d.getTime()))props["影片發布時間"]={date:{start:d.toISOString()}}}const children=[...blocks("影片資訊","影片連結："+(v.url||b.url)+"\nYouTube Video ID："+id+"\n發布時間："+(v.publishedAt||"未取得")),...blocks("英文逐字稿",b.transcript),...blocks("ChatGPT 學習整理",b.analysis)];const page=await notion(env,"/pages",{parent:{type:"data_source_id",data_source_id:DATA_SOURCE_ID},properties:props,children:children.slice(0,100)});return{url:page.url,id:page.id}}
 export default{async fetch(req,env){if(req.method==="OPTIONS")return new Response(null,{headers:cors});const u=new URL(req.url);try{if((u.pathname==="/api/check"||u.pathname==="/api/save")&&(!env.APP_PASSWORD||req.headers.get("X-App-Password")!==env.APP_PASSWORD))return reply({error:"密碼錯誤或尚未設定 APP_PASSWORD"},401);if(u.pathname==="/api/health")return reply({ok:true,service:"mason-learning-hub"});
 if(u.pathname==="/api/queue"&&req.method==="POST"){
+ if(!env.APP_PASSWORD||req.headers.get("X-App-Password")!==env.APP_PASSWORD)return reply({error:"網站存取密碼錯誤或尚未設定"},401);
  if(!env.LESSONS)return reply({error:"待整理資料庫尚未綁定"},503);
  const b=await req.json();if(!b.url||!b.transcript)return reply({error:"影片網址與逐字稿不可空白"},400);
  const v=b.video||await videoInfo(b.url),id=v.videoId||videoId(b.url),key="lesson:"+id;
@@ -25,8 +26,12 @@ if(u.pathname==="/api/queue"&&req.method==="POST"){
 }
 if(u.pathname==="/api/pending"&&req.method==="GET"){
  if(!env.LESSONS)return reply({error:"待整理資料庫尚未綁定"},503);
- if(!env.GPT_READ_KEY||u.searchParams.get("key")!==env.GPT_READ_KEY)return reply({error:"讀取連結無效"},401);
+ const auth=req.headers.get("Authorization")||"";
+ const bearer=auth.startsWith("Bearer ")?auth.slice(7).trim():"";
+ const legacy=u.searchParams.get("key")||"";
+ if(!env.GPT_READ_KEY||!(bearer===env.GPT_READ_KEY||legacy===env.GPT_READ_KEY))return reply({error:"讀取金鑰錯誤，請確認 Cloudflare GPT_READ_KEY"},401);
  const listed=await env.LESSONS.list({prefix:"lesson:",limit:100}),items=[];
- for(const k of listed.keys){const raw=await env.LESSONS.get(k.name);if(raw){try{items.push(JSON.parse(raw))}catch{}}}
+ for(const k of listed.keys){const raw=await env.LESSONS.get(k.name);if(raw){try{const item=JSON.parse(raw);if(item.status==="pending")items.push(item)}catch{}}}
+ items.sort((a,b)=>String(b.createdAt||"").localeCompare(String(a.createdAt||"")));
  return reply({count:items.length,items})
 }if(u.pathname==="/api/video"){const v=await videoInfo(u.searchParams.get("url")||"");delete v.player;return reply(v)}if(u.pathname==="/api/transcript"){const v=await videoInfo(u.searchParams.get("url")||""),t=await captions(v,u.searchParams.get("lang")||"en");return reply({...t,videoId:v.videoId})}if(u.pathname==="/api/check"){if(!env.NOTION_TOKEN)return reply({error:"尚未設定 NOTION_TOKEN"},503);const id=u.searchParams.get("videoId");const old=await duplicate(env,id);return reply({exists:!!old,url:old?.url||null})}if(u.pathname==="/api/save"&&req.method==="POST"){if(!env.NOTION_TOKEN)return reply({error:"尚未設定 NOTION_TOKEN"},503);const b=await req.json();if(!b.transcript||!b.analysis||!b.url)return reply({error:"連結、逐字稿與分析結果不可空白"},400);const r=await save(env,b);if(r.duplicate)return reply({error:"影片已收錄",url:r.url},409);return reply(r,201)}return reply({error:"Not found"},404)}catch(e){return reply({error:e.message||"Unknown error"},500)}}};
