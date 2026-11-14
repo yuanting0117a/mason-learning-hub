@@ -33,7 +33,7 @@ $("queue").onclick=async()=>{
    throw Error("影片已送達伺服器，但伺服器沒有回傳有效的分享網址。請重新整理後再試；若仍發生，代表 Cloudflare Worker 尚未更新完成。");
   }
   $("shareLink").href=d.shareUrl;$("shareLink").textContent=d.shareUrl;$("shareBox").classList.remove("hidden");
-  status("queueStatus",d.duplicate?"這部影片已存在，已重新產生分享連結。":"影片已保存，分享連結已成功產生。","ok");
+  status("queueStatus",d.duplicate?"這部影片已存在，已取回原分享連結。":"影片已保存，分享連結已成功產生。","ok");
  }catch(e){status("queueStatus",e.message,"error")}finally{$("queue").disabled=false}
 };
-$("copyShare").onclick=async()=>{try{await navigator.clipboard.writeText($("shareLink").href);status("queueStatus","GPT／Notion 共用連結已複製。","ok")}catch{status("queueStatus","複製失敗，請手動複製連結。","error")}};
+$("copyShare").onclick=async()=>{try{await navigator.clipboard.writeText($("shareLink").href);status("queueStatus","分享連結已複製。","ok")}catch{status("queueStatus","複製失敗，請手動複製連結。","error")}};
