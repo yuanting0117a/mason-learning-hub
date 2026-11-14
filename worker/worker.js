@@ -25,7 +25,7 @@ if(u.pathname==="/api/queue"&&req.method==="POST"){
 }
 if(u.pathname==="/api/pending"&&req.method==="GET"){
  if(!env.LESSONS)return reply({error:"待整理資料庫尚未綁定"},503);
- if(!env.APP_PASSWORD||u.searchParams.get("key")!==env.APP_PASSWORD)return reply({error:"讀取連結無效"},401);
+ if(!env.GPT_READ_KEY||u.searchParams.get("key")!==env.GPT_READ_KEY)return reply({error:"讀取連結無效"},401);
  const listed=await env.LESSONS.list({prefix:"lesson:",limit:100}),items=[];
  for(const k of listed.keys){const raw=await env.LESSONS.get(k.name);if(raw){try{items.push(JSON.parse(raw))}catch{}}}
  return reply({count:items.length,items})
