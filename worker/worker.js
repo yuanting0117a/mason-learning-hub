@@ -20,7 +20,7 @@ if(u.pathname==="/api/queue"&&req.method==="POST"){
  if(!env.LESSONS)return reply({error:"待整理資料庫尚未綁定"},503);
  const b=await req.json();if(!b.url||!b.transcript)return reply({error:"影片網址與逐字稿不可空白"},400);
  const v=b.video||await videoInfo(b.url),id=v.videoId||videoId(b.url),key="lesson:"+id;
- const old=await env.LESSONS.get(key);if(old)return reply({duplicate:true,videoId:id},200);
+ const old=await env.LESSONS.get(key);if(old){const existing=JSON.parse(old);let token=existing.shareToken;if(!token){token=crypto.randomUUID().replace(/-/g,"")+crypto.randomUUID().replace(/-/g,"");existing.shareToken=token;await env.LESSONS.put(key,JSON.stringify(existing));}await env.LESSONS.put("share:"+token,JSON.stringify({videoId:id,createdAt:existing.createdAt||new Date().toISOString()}));return reply({duplicate:true,videoId:id,shareUrl:"https://mason-learning-api.yuanting0117a.workers.dev/api/share/"+token},200);}
  const item={videoId:id,url:v.url||b.url,title:v.title||"YouTube "+id,publishedAt:v.publishedAt||null,author:v.author||"",transcript:b.transcript,status:"pending",createdAt:new Date().toISOString()};
  const shareToken=crypto.randomUUID().replace(/-/g,"")+crypto.randomUUID().replace(/-/g,"");item.shareToken=shareToken;
  await env.LESSONS.put(key,JSON.stringify(item));await env.LESSONS.put("share:"+shareToken,JSON.stringify({videoId:id,createdAt:item.createdAt}));return reply({saved:true,videoId:id,shareUrl:"https://mason-learning-api.yuanting0117a.workers.dev/api/share/"+shareToken},201)
