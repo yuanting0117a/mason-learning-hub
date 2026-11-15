@@ -53,3 +53,21 @@ label{display:block;font-size:11px;font-weight:750;color:#526176;margin:0 0 6px}
 footer{font-size:11px;color:#8a96a6;line-height:1.7;padding:22px 3px}
 @media(max-width:850px){.filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.search-wrap{grid-column:1/-1}.auth{grid-template-columns:1fr}.auth-controls{max-width:520px}.library{grid-template-columns:1fr}}
 @media(max-width:560px){.wrap{padding:22px 13px 40px}.intro{padding:18px;display:block}.notion-link{display:inline-block;margin-top:15px}.panel{padding:16px}.stats{grid-template-columns:repeat(2,1fr)}.filter-grid{grid-template-columns:1fr 1fr}.search-wrap{grid-column:1/-1}.auth-controls{flex-direction:column}.auth-controls button{width:100%}.meta-grid{gap:5px}.material-card{padding:15px}}
+
+/* v0.8.0 prompt workflow */
+.prompt-studio{margin:18px 0 22px;padding:23px}
+.studio-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:20px}
+.studio-heading h2{font-size:21px;margin:0 0 5px}
+.studio-heading p,.step-title p{font-size:12px;line-height:1.65;color:#738196;margin:0}
+.version-chip{font-size:11px;font-weight:750;color:#285da8;background:#eaf2ff;border-radius:30px;padding:7px 11px;white-space:nowrap}
+.prompt-input-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-bottom:22px}
+.prompt-input-grid .wide-field{grid-column:1/-1}
+.workflow-step{border-top:1px solid #e8edf3;padding:19px 0 4px;margin-top:12px}
+.step-title{display:flex;align-items:flex-start;gap:11px;margin-bottom:13px}
+.step-title h3{font-size:15px;margin:0 0 4px}
+.step-number{display:grid;place-items:center;flex:0 0 27px;height:27px;border-radius:50%;background:#eaf2ff;color:#2457a6;font-size:12px;font-weight:850}
+.button-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.prompt-output{background:#f7f9fc;color:#344256;font:12px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;resize:vertical;min-height:180px}
+.workflow-step textarea:not(.prompt-output){margin-top:2px;resize:vertical;line-height:1.65}
+.workflow-note{border-radius:10px;background:#f4f6f9;padding:12px 14px;font-size:11px;line-height:1.7;color:#697789;margin:17px 0 0}
+@media(max-width:600px){.prompt-studio{padding:16px}.studio-heading{display:block}.version-chip{display:inline-block;margin-top:10px}.prompt-input-grid{grid-template-columns:1fr}.prompt-input-grid .wide-field{grid-column:auto}.button-row button{flex:1}}
