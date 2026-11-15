@@ -5,31 +5,36 @@ const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers
 function videoId(value){let u;try{u=new URL(value)}catch{throw Error("網址格式不正確。")}let id="";if(u.hostname.includes("youtu.be"))id=u.pathname.split("/").filter(Boolean)[0]||"";else if(u.pathname==="/watch")id=u.searchParams.get("v")||"";else{const p=u.pathname.split("/").filter(Boolean),i=p.findIndex(x=>["shorts","embed","live"].includes(x));if(i>=0)id=p[i+1]||""}if(!/^[\w-]{11}$/.test(id))throw Error("無法辨識 YouTube Video ID。");return id}
 function extractObject(s,marker){const p=s.indexOf(marker);if(p<0)return null;const start=s.indexOf("{",p);if(start<0)return null;let depth=0,q=false,e=false;for(let i=start;i<s.length;i++){const c=s[i];if(q){if(e)e=false;else if(c==="\\")e=true;else if(c==='"')q=false;continue}if(c==='"')q=true;else if(c==="{")depth++;else if(c==="}"&&--depth===0){try{return JSON.parse(s.slice(start,i+1))}catch{return null}}}return null}
 async function videoInfo(url){
- const id=videoId(url),canonical="https://www.youtube.com/watch?v="+id;
- const [o,p,feed]=await Promise.all([
+ const id=videoId(url),canonical="https://www.youtube.com/watch?v="+id,shorts="https://www.youtube.com/shorts/"+id;
+ const [o,p,s,feed]=await Promise.all([
   fetch("https://www.youtube.com/oembed?url="+encodeURIComponent(canonical)+"&format=json").catch(()=>null),
-  fetch(canonical,{headers:{"User-Agent":"Mozilla/5.0","Accept-Language":"en-US,en;q=0.9"}}).catch(()=>null),
+  fetch(canonical,{headers:{"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36","Accept-Language":"en-US,en;q=0.9"}}).catch(()=>null),
+  fetch(shorts,{headers:{"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36","Accept-Language":"en-US,en;q=0.9"}}).catch(()=>null),
   fetch("https://www.youtube.com/feeds/videos.xml?video_id="+encodeURIComponent(id),{headers:{"Accept":"application/atom+xml,application/xml,text/xml"}}).catch(()=>null)
  ]);
  let oe={};if(o?.ok)oe=await o.json().catch(()=>({}));
- let html="",player=null,publishedAt=null,publishedAtSource=null;
- if(p?.ok){
-  html=await p.text();
-  player=extractObject(html,"ytInitialPlayerResponse");
-  const m=player?.microformat?.playerMicroformatRenderer;
-  if(m?.publishDate){publishedAt=m.publishDate;publishedAtSource="YouTube 影片頁面";}
-  else if(m?.uploadDate){publishedAt=m.uploadDate;publishedAtSource="YouTube 影片頁面";}
-  if(!publishedAt){
-   const patterns=[
-    [/"datePublished"\s*:\s*"([^"]+)"/,"YouTube 影片頁面"],
-    [/"publishDate"\s*:\s*"([^"]+)"/,"YouTube 影片頁面"],
-    [/<meta[^>]+itemprop=["']datePublished["'][^>]+content=["']([^"']+)["']/i,"YouTube 影片頁面"],
-    [/<meta[^>]+content=["']([^"']+)["'][^>]+itemprop=["']datePublished["']/i,"YouTube 影片頁面"],
-    [/<meta[^>]+name=["']publish_date["'][^>]+content=["']([^"']+)["']/i,"YouTube 影片頁面"],
-    [/<meta[^>]+property=["']article:published_time["'][^>]+content=["']([^"']+)["']/i,"YouTube 影片頁面"]
-   ];
-   for(const [re,source] of patterns){const hit=html.match(re);if(hit?.[1]){publishedAt=hit[1];publishedAtSource=source;break;}}
+ const pages=[];
+ for(const response of [p,s]){
+  if(response?.ok){const html=await response.text();pages.push({html,player:extractObject(html,"ytInitialPlayerResponse")});}
+ }
+ let player=pages.find(x=>x.player)?.player||null,publishedAt=null,publishedAtSource=null;
+ for(const page of pages){
+  const m=page.player?.microformat?.playerMicroformatRenderer;
+  const direct=m?.publishDate||m?.uploadDate;
+  if(direct){publishedAt=direct;publishedAtSource="YouTube 影片頁面（播放器資料）";break;}
+  const html=page.html;
+  const jsonDate=html.match(/"(?:datePublished|publishDate|uploadDate|dateCreated)"\s*:\s*"([^"]+)"/i)?.[1];
+  if(jsonDate){publishedAt=jsonDate;publishedAtSource="YouTube 影片頁面（結構化資料）";break;}
+  const metas=[...html.matchAll(/<meta\b[^>]*>/gi)];
+  for(const tag of metas){
+   const attrs={};
+   for(const a of tag[0].matchAll(/([\w:-]+)\s*=\s*["']([^"']+)["']/g))attrs[a[1].toLowerCase()]=a[2];
+   const key=(attrs.itemprop||attrs.name||attrs.property||"").toLowerCase();
+   if(["datepublished","uploaddate","publish_date","article:published_time"].includes(key)&&attrs.content){
+    publishedAt=attrs.content;publishedAtSource="YouTube 影片頁面（Meta）";break;
+   }
   }
+  if(publishedAt)break;
  }
  if(!publishedAt&&feed?.ok){
   const xml=await feed.text();
@@ -39,9 +44,9 @@ async function videoInfo(url){
   if(published&&(!feedId||feedId===id)){publishedAt=published;publishedAtSource="YouTube RSS";}
  }
  if(publishedAt){
-  const d=new Date(publishedAt);
-  if(!Number.isNaN(d.getTime()))publishedAt=d.toISOString().slice(0,10);
-  else publishedAt=null;
+  const datePart=String(publishedAt).match(/\d{4}-\d{2}-\d{2}/)?.[0];
+  if(datePart)publishedAt=datePart;
+  else {const d=new Date(publishedAt);publishedAt=!Number.isNaN(d.getTime())?d.toISOString().slice(0,10):null;}
  }
  return{videoId:id,url:canonical,title:oe.title||player?.videoDetails?.title||"YouTube "+id,author:oe.author_name||"",publishedAt,publishedAtSource,player};
 }
