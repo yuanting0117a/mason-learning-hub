@@ -1,9 +1,119 @@
 <!doctype html>
-<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f6f8fb"><title>Mason Learning Hub</title><link rel="stylesheet" href="styles.css?v=0.4.2"></head>
-<body><main class="wrap">
-<header><div><p class="eyebrow">PERSONAL ENGLISH LEARNING LIBRARY</p><h1>Mason Learning Hub</h1><p class="sub">貼上影片連結，自動擷取影片日期（一般影片頁面＋Shorts 頁面＋RSS 備援）與字幕，再產生 GPT 指令。</p></div><span class="tag">v0.4.2</span></header>
-<section class="panel"><div class="heading"><h2>01　新增教材</h2><small>YouTube / Shorts</small></div><label for="url">影片連結</label><div class="urlrow"><input id="url" type="url" placeholder="貼上 YouTube 或 Shorts 網址"><button id="fetch" class="primary">取得影片資訊與字幕</button></div><p id="status" class="status">貼上連結後開始。</p><div id="meta" class="meta hidden"><div><small>影片名稱</small><b id="title"></b></div><div><small>發布日期</small><b id="published"></b></div><div><small>Video ID</small><code id="vid"></code></div><div id="duplicateNotice" class="status hidden"></div></div></section>
-<section class="panel"><div class="heading"><h2>02　英文逐字稿</h2><small>可自行修正或貼上</small></div><textarea id="transcript" rows="13" placeholder="自動字幕會出現在這裡；若無法取得，可貼上 YouTube Gemini 提供的英文逐字稿。"></textarea><div class="actions"><small id="captionInfo">尚未載入</small><button id="copyTranscript" class="light">複製逐字稿</button></div></section>
-<section class="panel"><div class="heading"><h2>03　產生 GPT 指令</h2><small>GPT 分析＋Notion 匯入</small></div><button id="makePrompt" class="primary full">產生完整 GPT 指令</button><p id="promptStatus" class="status">請先填妥影片連結與逐字稿。</p><div id="promptBox" class="hidden"><label for="prompt">可直接貼到一般 ChatGPT 對話</label><textarea id="prompt" rows="18" readonly></textarea><div class="actions"><small>指令已包含影片資訊、完整逐字稿、分析規格與 Notion 重複檢查要求。</small><button id="copyPrompt" class="primary">複製 GPT 指令</button></div></div></section>
-<footer>此網站只負責取得教材資料與準備指令，不直接寫入 Notion。GPT 需要使用已連接且有編輯權限的 Notion 工作區；匯入前會先以 YouTube Video ID 判斷是否已有紀錄。</footer>
-</main><script src="app.js?v=0.4.2"></script></body></html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f5f7fa">
+<title>English Learning Hub</title>
+<link rel="stylesheet" href="styles.css?v=0.5.0">
+</head>
+<body>
+<main class="wrap">
+<header>
+  <div>
+    <p class="eyebrow">PERSONAL ENGLISH LEARNING LIBRARY</p>
+    <h1>English Learning Hub</h1>
+    <p class="sub">多來源教材收集・Gemini 製作教材・GPT 匯入 Notion</p>
+  </div>
+  <span class="tag">v0.5.0</span>
+</header>
+
+<section class="intro">
+  <div class="step"><span>01</span><b>網站</b><small>收集來源與逐字稿</small></div>
+  <div class="arrow">→</div>
+  <div class="step"><span>02</span><b>Gemini</b><small>製作教材與練習</small></div>
+  <div class="arrow">→</div>
+  <div class="step"><span>03</span><b>GPT</b><small>匯入並檢查 Notion</small></div>
+</section>
+
+<section class="panel">
+  <div class="heading"><h2>01　新增教材</h2><small>影片・Podcast・頻道・文章</small></div>
+  <div class="formgrid">
+    <div>
+      <label for="sourceType">來源分類</label>
+      <select id="sourceType">
+        <option value="Mason">Mason</option>
+        <option value="Podcast">Podcast</option>
+        <option value="YouTube 頻道">YouTube 頻道</option>
+        <option value="TED／演講">TED／演講</option>
+        <option value="新聞／媒體">新聞／媒體</option>
+        <option value="線上課程">線上課程</option>
+        <option value="其他">其他</option>
+      </select>
+    </div>
+    <div>
+      <label for="contentType">教材形式</label>
+      <select id="contentType">
+        <option value="影片">影片</option>
+        <option value="Podcast">Podcast</option>
+        <option value="文章">文章</option>
+        <option value="其他">其他</option>
+      </select>
+    </div>
+  </div>
+  <label for="sourceName">頻道／Podcast／來源名稱</label>
+  <input id="sourceName" list="sourceSuggestions" placeholder="例如：Mason、BBC Learning English、TED Talks、Luke's English Podcast">
+  <datalist id="sourceSuggestions">
+    <option value="Mason"></option>
+    <option value="BBC Learning English"></option>
+    <option value="VOA Learning English"></option>
+    <option value="TED Talks"></option>
+    <option value="TED-Ed"></option>
+    <option value="Luke's English Podcast"></option>
+    <option value="6 Minute English"></option>
+    <option value="The English We Speak"></option>
+    <option value="All Ears English"></option>
+    <option value="The Daily"></option>
+  </datalist>
+  <label for="url">教材連結</label>
+  <div class="urlrow">
+    <input id="url" type="url" placeholder="YouTube、Podcast、Spotify、Apple Podcasts、文章網址…">
+    <button id="fetch" class="primary">讀取 YouTube 字幕</button>
+  </div>
+  <p id="status" class="status">YouTube 可嘗試自動讀取資訊與英文字幕；Podcast／文章可直接填寫資料與逐字稿。</p>
+  <div class="formgrid">
+    <div><label for="title">教材標題</label><input id="title" placeholder="影片／集數／文章名稱"></div>
+    <div><label for="published">發布日期（選填）</label><input id="published" type="date"></div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="heading"><h2>02　原始內容</h2><small>逐字稿／文章文字</small></div>
+  <textarea id="transcript" rows="11" placeholder="貼上英文逐字稿、Podcast transcript 或文章內容。YouTube 字幕成功時會自動填入。"></textarea>
+  <div class="actions"><small id="captionInfo">尚未載入內容</small><button id="copyTranscript" class="light">複製原始內容</button></div>
+</section>
+
+<section class="panel">
+  <div class="heading"><h2>03　交給 Gemini 製作教材</h2><small>Gemini 負責分析，不直接寫入 Notion</small></div>
+  <button id="makePrompt" class="primary full">產生 Gemini 教材指令</button>
+  <p id="promptStatus" class="status">先填寫教材來源、連結與原始內容，再產生指令。</p>
+  <div id="promptBox" class="hidden">
+    <label for="prompt">貼到 Gemini 的完整指令</label>
+    <textarea id="prompt" rows="16" readonly></textarea>
+    <div class="actions"><small>Gemini 完成後，將完整教材貼到下一區。</small><button id="copyPrompt" class="primary">複製 Gemini 指令</button></div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="heading"><h2>04　保存教材，交給 GPT 匯入</h2><small>網站會留下待匯入紀錄</small></div>
+  <label for="analysis">Gemini 產生的完整教材</label>
+  <textarea id="analysis" rows="12" placeholder="把 Gemini 產生的教材完整貼在這裡，包含單字、片語、文法、例句、練習等。"></textarea>
+  <label for="appPassword">網站管理密碼</label>
+  <input id="appPassword" type="password" autocomplete="current-password" placeholder="輸入網站管理密碼">
+  <button id="save" class="primary full">保存到網站待匯入清單</button>
+  <p id="saveStatus" class="status">保存後，網站會記錄來源、原始內容、Gemini 教材及匯入狀態。</p>
+</section>
+
+<section class="panel">
+  <div class="heading"><h2>05　教材紀錄</h2><button id="refresh" class="light">重新整理</button></div>
+  <p class="hint">查看已保存的教材。GPT 匯入 Notion 成功後，可在對應紀錄貼上 Notion 頁面連結並標記完成。</p>
+  <div id="library" class="library"><p class="empty">輸入管理密碼後，按「重新整理」載入紀錄。</p></div>
+</section>
+
+<footer>
+  網站負責收集與保存教材；Gemini 負責教材分析；GPT 使用已連接的 Notion 工具負責匯入與去重。影片發布日期不會自動寫入 Notion 的發布日期欄位，避免錯誤日期。
+</footer>
+</main>
+<script src="app.js?v=0.5.0"></script>
+</body>
+</html>
