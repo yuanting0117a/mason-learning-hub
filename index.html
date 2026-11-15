@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f5f7fa">
 <title>英文教材庫</title>
-<link rel="stylesheet" href="styles.css?v=0.7.0">
+<link rel="stylesheet" href="styles.css?v=0.8.0">
 </head>
 <body>
 <main class="wrap">
@@ -13,16 +13,16 @@
   <div>
     <p class="eyebrow">PERSONAL ENGLISH MATERIALS</p>
     <h1>英文教材庫</h1>
-    <p class="sub">直接瀏覽你 Notion 裡的英文教材與學習內容</p>
+    <p class="sub">教材製作、提示詞產生與 Notion 閱讀管理</p>
   </div>
-  <span class="tag">v0.7.0</span>
+  <span class="tag">v0.8.0</span>
 </header>
 
 <section class="intro">
   <div class="intro-copy">
     <span class="kicker">NOTION MATERIALS</span>
-    <h2>你的教材，集中在這裡閱讀與管理</h2>
-    <p>資料直接讀取 Notion「英文教材紀錄」。在這裡搜尋教材、查看內容、開啟原影片或回到 Notion 原始頁面。</p>
+    <h2>從影片連結到正式教材</h2>
+    <p>先輸入發布日期與影片連結，產生 Gemini 教材提示詞；取得教材後，再產生 GPT 檢查與 Notion 整理提示詞。</p>
   </div>
   <a class="notion-link" href="https://app.notion.com/p/418c88fc35de81dba77bc654cab4ce3e" target="_blank" rel="noopener">開啟 Notion 資料庫 ↗</a>
 </section>
@@ -30,7 +30,7 @@
 <section class="auth panel">
   <div class="auth-copy">
     <h2>連線至教材資料庫</h2>
-    <p>輸入網站管理密碼，讀取 Notion 裡的教材。網站只讀取資料，不會修改你的 Notion。</p>
+    <p>輸入網站管理密碼，讀取 Notion 裡的教材。提示詞產生器不會修改現有資料。</p>
   </div>
   <div class="auth-controls">
     <input id="appPassword" type="password" autocomplete="current-password" placeholder="網站管理密碼">
@@ -40,6 +40,32 @@
 </section>
 
 <section id="libraryArea" class="hidden">
+  <section class="panel prompt-studio">
+    <div class="studio-heading">
+      <div><span class="kicker">MATERIAL WORKFLOW</span><h2>教材提示詞產生器</h2><p>依序完成 Gemini 教材製作，再交給 GPT 檢查與整理。</p></div>
+      <span class="version-chip">兩階段流程</span>
+    </div>
+    <div class="prompt-input-grid">
+      <div><label for="releaseDate">影片發布日期（手動輸入）</label><input id="releaseDate" type="date" required></div>
+      <div class="wide-field"><label for="videoUrl">YouTube 影片連結</label><input id="videoUrl" type="url" placeholder="https://youtu.be/..." required></div>
+      <div><label for="videoChannel">頻道名稱（選填）</label><input id="videoChannel" type="text" placeholder="例如 VibeEnglish"></div>
+      <div><label for="videoCategory">教材分類</label><select id="videoCategory"><option>美式英文 高級</option><option>美式英文 中級</option><option>英檢中高級</option><option>英式英文</option><option>其他</option></select></div>
+    </div>
+    <div class="workflow-step">
+      <div class="step-title"><span class="step-number">1</span><div><h3>Gemini｜製作教材</h3><p>產生逐句中英對照、文章內穿插重點解析的教材指令。</p></div></div>
+      <div class="button-row"><button id="makeGemini" class="primary">產生 Gemini 提示詞</button><button id="copyGemini" class="light" disabled>複製全部</button></div>
+      <textarea id="geminiPrompt" class="prompt-output" rows="10" placeholder="填入發布日期與影片連結後，按「產生 Gemini 提示詞」。" readonly></textarea>
+    </div>
+    <div class="workflow-step">
+      <div class="step-title"><span class="step-number">2</span><div><h3>GPT｜檢查教材與整理 Notion</h3><p>貼上 Gemini 的完整結果，產生第二組檢查及匯入指令。</p></div></div>
+      <label for="geminiResult">Gemini 產生的完整教材</label>
+      <textarea id="geminiResult" rows="8" placeholder="將 Gemini 的教材結果完整貼在這裡……"></textarea>
+      <div class="button-row"><button id="makeGpt" class="primary">產生 GPT 檢查／匯入提示詞</button><button id="copyGpt" class="light" disabled>複製全部</button></div>
+      <textarea id="gptPrompt" class="prompt-output" rows="10" placeholder="產生後，複製整份提示詞交給 GPT。" readonly></textarea>
+    </div>
+    <p class="workflow-note">版權提醒：只有在你擁有逐字稿、取得授權或素材屬公眾領域時，才要求完整逐字稿及完整翻譯。其他影片請使用逐句英文摘要／改述與中文對照，不重製整部受版權保護的內容。網站目前負責產生提示詞；Notion 寫入仍須由 GPT 在確認資料後執行。</p>
+  </section>
+
   <section class="stats" id="stats"></section>
   <section class="panel filters">
     <div class="filter-head">
@@ -61,8 +87,8 @@
   </section>
 </section>
 
-<footer>資料來源：Notion「英文教材紀錄」｜此網站為唯讀教材瀏覽介面，學習狀態及教材內容請在 Notion 修改。</footer>
+<footer>資料來源：Notion「英文教材紀錄」｜提示詞產生器不會自動匯入資料；請先由 GPT 檢查，再確認寫入 Notion。</footer>
 </main>
-<script src="app.js?v=0.7.0"></script>
+<script src="app.js?v=0.8.0"></script>
 </body>
 </html>
