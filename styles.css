@@ -33,3 +33,20 @@ button:disabled{opacity:.55;cursor:wait}
 .empty{color:#8290a2;font-size:13px}
 footer{font-size:11px;color:#8490a0;line-height:1.7;padding:12px 3px}
 @media(max-width:620px){.wrap{padding:22px 13px 40px}.panel{padding:16px}.urlrow{flex-direction:column}.urlrow button{width:100%}.formgrid{grid-template-columns:1fr}.intro{gap:8px;padding:12px 8px}.step{flex:1}.step small{font-size:10px}.arrow{font-size:12px}}
+
+.welcome{background:#eaf1fb;border:1px solid #d8e4f5;border-radius:16px;padding:20px;margin:14px 0 18px}
+.welcome h2{font-size:17px;margin:0 0 15px}
+.welcome>p{font-size:13px;color:#52647c;line-height:1.7;margin:15px 0 0}
+.quicksteps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.quicksteps>div{display:grid;grid-template-columns:30px 1fr;column-gap:9px;align-items:center;background:#fff;border-radius:12px;padding:12px}
+.quicksteps span{grid-row:span 2;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#2457a6;color:white;font-weight:800}
+.quicksteps b{font-size:13px}.quicksteps small{font-size:11px;line-height:1.5}
+.step-label{display:block;font-size:10px;letter-spacing:.12em;font-weight:850;color:#5276aa;margin-bottom:4px}
+.heading>div{min-width:0}.heading h2{margin:0}
+.tip{font-size:12px;color:#68788e;line-height:1.7;margin:0 0 10px}
+.panel{padding:21px}
+@media(max-width:620px){.quicksteps{grid-template-columns:1fr}.quicksteps>div{grid-template-columns:30px 1fr}.welcome{padding:16px}.panel{padding:16px}}
+
+.import-help{background:#eef4fb;border-radius:10px;padding:11px 12px;margin-top:12px}
+.import-help b{font-size:12px;color:#284e83}
+.import-help p{font-size:12px;color:#61738b;line-height:1.6;margin:5px 0 0}
