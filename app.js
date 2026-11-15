@@ -18,7 +18,7 @@ $("fetch").onclick=async()=>{
  const url=$("url").value.trim(),id=extractVideoId(url);
  if(!url)return status("status","請先貼上教材連結。","error");
  if(!id)return status("status","目前只有 YouTube 影片支援自動取得字幕。Podcast、文章或其他平台請手動填寫標題與逐字稿。");
- $("fetch").disabled=true;status("status","正在讀取 YouTube 影片資訊與字幕……");
+ $("fetch").disabled=true;status("status","正在讀取影片標題與英文字幕，請稍候……");
  try{
   const r=await fetch(endpoint("/api/video?url="+encodeURIComponent(url))),d=await r.json();
   if(!r.ok)throw Error(d.error||"影片資訊讀取失敗");
@@ -73,7 +73,7 @@ $("save").onclick=async()=>{
   const body={url,title,sourceType:$("sourceType").value,sourceName:$("sourceName").value.trim(),contentType:$("contentType").value,publishedAt:$("published").value||null,transcript,analysis,video:video||null};
   const r=await fetch(endpoint("/api/queue"),{method:"POST",headers:{"Content-Type":"application/json","X-App-Password":password},body:JSON.stringify(body)});
   const d=await r.json();if(!r.ok)throw Error(d.error||"保存失敗");
-  status("saveStatus",d.duplicate?"這筆教材已存在，沒有新增重複紀錄。":"保存成功！教材已加入網站紀錄，狀態為待 GPT 匯入。","ok");
+  status("saveStatus",d.duplicate?"這份教材之前已保存過，系統沒有建立重複紀錄。":"保存成功！請到下方「已保存的教材」，再把它交給 ChatGPT 匯入 Notion。","ok");
   await loadLibrary();
  }catch(e){status("saveStatus",e.message,"error")}
  finally{$("save").disabled=false}
@@ -87,7 +87,7 @@ async function loadLibrary(){
   libraryItems=d.items;
   $("library").innerHTML=d.items.map((item,index)=>{
    const done=item.status==="imported",id=escapeHtml(item.id||item.videoId||"");
-   return '<article class="record"><div class="recordtop"><div><h3>'+escapeHtml(item.title||"未命名教材")+'</h3><div class="meta">'+escapeHtml(item.sourceType||"其他")+' · '+escapeHtml(item.contentType||"")+' · '+escapeHtml(item.sourceName||"未填來源名稱")+'</div><div class="meta">'+escapeHtml(item.createdAt||"")+'</div><a href="'+escapeHtml(item.url||"#")+'" target="_blank" rel="noopener">開啟原始教材</a></div><span class="pill '+(done?"done":"pending")+'">'+(done?"已匯入 Notion":"待 GPT 匯入")+'</span></div><details><summary>查看 Gemini 教材與原始內容</summary><p class="meta">Gemini 教材</p><pre>'+escapeHtml(item.analysis||"尚未提供")+'</pre><p class="meta">原始逐字稿／文章</p><pre>'+escapeHtml(item.transcript||"尚未提供")+'</pre></details>'+(done?'<p class="meta"><a href="'+escapeHtml(item.notionUrl||"#")+'" target="_blank" rel="noopener">開啟 Notion 紀錄</a></p>':'<div class="recordactions"><button class="light" data-copy-index="'+index+'">複製 GPT 匯入指令</button><input id="notion-'+id+'" type="url" placeholder="GPT 匯入成功後，貼上 Notion 頁面連結"><button class="light" data-mark="'+id+'">標記已匯入</button></div>')+'</article>';
+   return '<article class="record"><div class="recordtop"><div><h3>'+escapeHtml(item.title||"未命名教材")+'</h3><div class="meta">'+escapeHtml(item.sourceType||"其他")+' · '+escapeHtml(item.contentType||"")+' · '+escapeHtml(item.sourceName||"未填來源名稱")+'</div><div class="meta">'+escapeHtml(item.createdAt||"")+'</div><a href="'+escapeHtml(item.url||"#")+'" target="_blank" rel="noopener">開啟原始教材</a></div><span class="pill '+(done?"done":"pending")+'">'+(done?"已匯入 Notion":"待 GPT 匯入")+'</span></div><details><summary>查看 Gemini 教材與原始內容</summary><p class="meta">Gemini 教材</p><pre>'+escapeHtml(item.analysis||"尚未提供")+'</pre><p class="meta">原始逐字稿／文章</p><pre>'+escapeHtml(item.transcript||"尚未提供")+'</pre></details>'+(done?'<p class="meta"><a href="'+escapeHtml(item.notionUrl||"#")+'" target="_blank" rel="noopener">開啟 Notion 紀錄</a></p>':'<div class="import-help"><b>下一步：交給 GPT 放進 Notion</b><p>按「複製 GPT 匯入指令」，再開啟 ChatGPT 貼上。ChatGPT 回報匯入成功後，把 Notion 頁面網址貼在下方。</p></div><div class="recordactions"><button class="light" data-copy-index="'+index+'">複製 GPT 匯入指令</button><input id="notion-'+id+'" type="url" placeholder="GPT 匯入成功後，貼上 Notion 頁面連結"><button class="light" data-mark="'+id+'">標記已匯入</button></div>')+'</article>';
   }).join("");
   $("library").querySelectorAll("[data-copy-index]").forEach(btn=>btn.onclick=()=>copyImportPrompt(Number(btn.dataset.copyIndex)));
   $("library").querySelectorAll("[data-mark]").forEach(btn=>btn.onclick=()=>markImported(btn.dataset.mark));
