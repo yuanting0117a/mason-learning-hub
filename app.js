@@ -1,6 +1,7 @@
 const API="https://mason-learning-api.yuanting0117a.workers.dev";
 const $=id=>document.getElementById(id);
 let video=null;
+let libraryItems=[];
 const endpoint=path=>API.replace(/\/$/,"")+path;
 function status(id,msg,type=""){const el=$(id);el.textContent=msg;el.className="status "+type}
 function extractVideoId(value){try{const u=new URL(value);if(u.hostname.includes("youtu.be"))return u.pathname.split("/").filter(Boolean)[0]||"";if(u.pathname==="/watch")return u.searchParams.get("v")||"";const p=u.pathname.split("/").filter(Boolean),i=p.findIndex(x=>["shorts","embed","live"].includes(x));return i>=0?p[i+1]||"":""}catch{return""}}
@@ -83,13 +84,36 @@ async function loadLibrary(){
  try{
   const r=await fetch(endpoint("/api/library"),{headers:{"X-App-Password":password}}),d=await r.json();if(!r.ok)throw Error(d.error||"讀取失敗");
   if(!d.items?.length){$("library").innerHTML='<p class="empty">目前還沒有教材紀錄。</p>';return}
-  $("library").innerHTML=d.items.map(item=>{
+  libraryItems=d.items;
+  $("library").innerHTML=d.items.map((item,index)=>{
    const done=item.status==="imported",id=escapeHtml(item.id||item.videoId||"");
-   return '<article class="record"><div class="recordtop"><div><h3>'+escapeHtml(item.title||"未命名教材")+'</h3><div class="meta">'+escapeHtml(item.sourceType||"其他")+' · '+escapeHtml(item.contentType||"")+' · '+escapeHtml(item.sourceName||"未填來源名稱")+'</div><div class="meta">'+escapeHtml(item.createdAt||"")+'</div><a href="'+escapeHtml(item.url||"#")+'" target="_blank" rel="noopener">開啟原始教材</a></div><span class="pill '+(done?"done":"pending")+'">'+(done?"已匯入 Notion":"待 GPT 匯入")+'</span></div><details><summary>查看 Gemini 教材與原始內容</summary><p class="meta">Gemini 教材</p><pre>'+escapeHtml(item.analysis||"尚未提供")+'</pre><p class="meta">原始逐字稿／文章</p><pre>'+escapeHtml(item.transcript||"尚未提供")+'</pre></details>'+(done?'<p class="meta"><a href="'+escapeHtml(item.notionUrl||"#")+'" target="_blank" rel="noopener">開啟 Notion 紀錄</a></p>':'<div class="recordactions"><input id="notion-'+id+'" type="url" placeholder="GPT 匯入成功後，貼上 Notion 頁面連結"><button class="light" data-mark="'+id+'">標記已匯入</button></div>')+'</article>';
+   return '<article class="record"><div class="recordtop"><div><h3>'+escapeHtml(item.title||"未命名教材")+'</h3><div class="meta">'+escapeHtml(item.sourceType||"其他")+' · '+escapeHtml(item.contentType||"")+' · '+escapeHtml(item.sourceName||"未填來源名稱")+'</div><div class="meta">'+escapeHtml(item.createdAt||"")+'</div><a href="'+escapeHtml(item.url||"#")+'" target="_blank" rel="noopener">開啟原始教材</a></div><span class="pill '+(done?"done":"pending")+'">'+(done?"已匯入 Notion":"待 GPT 匯入")+'</span></div><details><summary>查看 Gemini 教材與原始內容</summary><p class="meta">Gemini 教材</p><pre>'+escapeHtml(item.analysis||"尚未提供")+'</pre><p class="meta">原始逐字稿／文章</p><pre>'+escapeHtml(item.transcript||"尚未提供")+'</pre></details>'+(done?'<p class="meta"><a href="'+escapeHtml(item.notionUrl||"#")+'" target="_blank" rel="noopener">開啟 Notion 紀錄</a></p>':'<div class="recordactions"><button class="light" data-copy-index="'+index+'">複製 GPT 匯入指令</button><input id="notion-'+id+'" type="url" placeholder="GPT 匯入成功後，貼上 Notion 頁面連結"><button class="light" data-mark="'+id+'">標記已匯入</button></div>')+'</article>';
   }).join("");
+  $("library").querySelectorAll("[data-copy-index]").forEach(btn=>btn.onclick=()=>copyImportPrompt(Number(btn.dataset.copyIndex)));
   $("library").querySelectorAll("[data-mark]").forEach(btn=>btn.onclick=()=>markImported(btn.dataset.mark));
  }catch(e){$("library").innerHTML='<p class="empty">'+escapeHtml(e.message)+'</p>'}
  finally{$("refresh").disabled=false}
+}
+async function copyImportPrompt(index){
+ const item=libraryItems[index];if(!item)return;
+ const prompt=[
+ "請使用我已連接的 Notion 工具，把以下 Gemini 教材實際匯入既有的「英文教材紀錄」資料庫，不要只輸出草稿。",
+ "標題："+(item.title||"未命名教材"),
+ "來源分類："+(item.sourceType||"其他"),
+ "來源名稱："+(item.sourceName||"未填寫"),
+ "教材形式："+(item.contentType||"其他"),
+ "原始連結："+(item.url||""),
+ "YouTube Video ID："+(item.videoId||"非 YouTube"),
+ "發布日期："+(item.publishedAt||"未提供；不要猜測或填入 Notion 發布日期欄位"),
+ "原始逐字稿／文章：",item.transcript||"未提供",
+ "Gemini 完整教材：",item.analysis||"未提供",
+ "Notion Data Source ID：418c88fc-35de-814c-be2e-000b30e4594d。",
+ "寫入前依 YouTube ID 或原始連結精確查重；相同項目更新舊頁，不得重複新增。",
+ "填入標題、影片連結、來源分類、來源名稱、教材形式、內容狀態及學習狀態。原始內容與 Gemini 教材分開放入頁面。",
+ "保留複習次數與最後複習日期；影片發布日期保持空白。寫入後重新讀取確認並回報 Notion 頁面連結。"
+ ].join("\n\n");
+ try{await navigator.clipboard.writeText(prompt);status("saveStatus","GPT 匯入指令已複製。貼到 ChatGPT，完成 Notion 寫入後再把頁面連結貼回這筆紀錄。","ok")}
+ catch{status("saveStatus","複製失敗，請稍後再試。","error")}
 }
 async function markImported(id){
  const input=$("notion-"+id),notionUrl=input?.value.trim(),password=$("appPassword").value.trim();
