@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f5f7fa">
 <title>English Learning Hub</title>
-<link rel="stylesheet" href="styles.css?v=0.5.1">
+<link rel="stylesheet" href="styles.css?v=0.6.0">
 </head>
 <body>
 <main class="wrap">
@@ -13,24 +13,26 @@
   <div>
     <p class="eyebrow">PERSONAL ENGLISH LEARNING LIBRARY</p>
     <h1>English Learning Hub</h1>
-    <p class="sub">多來源教材收集・Gemini 製作教材・GPT 匯入 Notion</p>
+    <p class="sub">把影片、Podcast 和文章整理成自己的英文教材</p>
   </div>
-  <span class="tag">v0.5.1</span>
+  <span class="tag">v0.6.0</span>
 </header>
 
-<section class="intro">
-  <div class="step"><span>01</span><b>網站</b><small>收集來源與逐字稿</small></div>
-  <div class="arrow">→</div>
-  <div class="step"><span>02</span><b>Gemini</b><small>製作教材與練習</small></div>
-  <div class="arrow">→</div>
-  <div class="step"><span>03</span><b>GPT</b><small>匯入並檢查 Notion</small></div>
+<section class="welcome">
+  <h2>使用方式：照著下面 3 步驟就好</h2>
+  <div class="quicksteps">
+    <div><span>1</span><b>放入來源</b><small>貼上影片或文章連結</small></div>
+    <div><span>2</span><b>製作教材</b><small>把指令交給 Gemini</small></div>
+    <div><span>3</span><b>保存並匯入</b><small>保存到這裡，再交給 GPT 放進 Notion</small></div>
+  </div>
+  <p>簡單記：<b>這個網站負責整理和保存</b>；Gemini 負責製作教材；ChatGPT 負責把教材放進 Notion。</p>
 </section>
 
 <section class="panel">
-  <div class="heading"><h2>01　新增教材</h2><small>影片・Podcast・頻道・文章</small></div>
+  <div class="heading"><div><span class="step-label">STEP 1</span><h2>選擇你要學的內容</h2></div><small>先填這一區</small></div>
   <div class="formgrid">
     <div>
-      <label for="sourceType">來源分類</label>
+      <label for="sourceType">內容從哪裡來？</label>
       <select id="sourceType">
         <option value="Mason">Mason</option>
         <option value="Podcast">Podcast</option>
@@ -42,7 +44,7 @@
       </select>
     </div>
     <div>
-      <label for="contentType">教材形式</label>
+      <label for="contentType">這是什麼類型？</label>
       <select id="contentType">
         <option value="影片">影片</option>
         <option value="Podcast">Podcast</option>
@@ -51,69 +53,64 @@
       </select>
     </div>
   </div>
-  <label for="sourceName">頻道／Podcast／來源名稱</label>
-  <input id="sourceName" list="sourceSuggestions" value="Mason" placeholder="例如：Mason、BBC Learning English、TED Talks、Luke's English Podcast">
+  <label for="sourceName">頻道或來源名稱</label>
+  <input id="sourceName" list="sourceSuggestions" value="Mason" placeholder="例如：Mason、VibeEnglish、BBC Learning English">
   <datalist id="sourceSuggestions">
-    <option value="Mason"></option>
-    <option value="BBC Learning English"></option>
-    <option value="VOA Learning English"></option>
-    <option value="TED Talks"></option>
-    <option value="TED-Ed"></option>
-    <option value="Luke's English Podcast"></option>
-    <option value="6 Minute English"></option>
-    <option value="The English We Speak"></option>
-    <option value="All Ears English"></option>
-    <option value="The Daily"></option>
+    <option value="Mason"></option><option value="BBC Learning English"></option><option value="VOA Learning English"></option><option value="TED Talks"></option><option value="TED-Ed"></option><option value="Luke's English Podcast"></option><option value="6 Minute English"></option><option value="The English We Speak"></option><option value="All Ears English"></option><option value="The Daily"></option><option value="VibeEnglish"></option>
   </datalist>
-  <label for="url">教材連結</label>
+  <label for="url">教材網址</label>
   <div class="urlrow">
-    <input id="url" type="url" placeholder="YouTube、Podcast、Spotify、Apple Podcasts、文章網址…">
-    <button id="fetch" class="primary">讀取 YouTube 字幕</button>
+    <input id="url" type="url" placeholder="貼上 YouTube、Podcast 或文章網址">
+    <button id="fetch" class="primary">讀取 YouTube 標題與字幕</button>
   </div>
-  <p id="status" class="status">YouTube 可嘗試自動讀取資訊與英文字幕；Podcast／文章可直接填寫資料與逐字稿。</p>
+  <p class="tip">如果是 YouTube：貼上網址後按右邊按鈕，網站會嘗試讀取標題和英文字幕。<br>如果是 Podcast 或文章：直接填標題，並在下一區貼上逐字稿或文章內容。</p>
   <div class="formgrid">
     <div><label for="title">教材標題</label><input id="title" placeholder="影片／集數／文章名稱"></div>
-    <div><label for="published">發布日期（選填）</label><input id="published" type="date"></div>
+    <div><label for="published">發布日期（不知道可留白）</label><input id="published" type="date"></div>
   </div>
+  <p id="status" class="status">完成這一區後，往下貼上或確認原始內容。</p>
 </section>
 
 <section class="panel">
-  <div class="heading"><h2>02　原始內容</h2><small>逐字稿／文章文字</small></div>
-  <textarea id="transcript" rows="11" placeholder="貼上英文逐字稿、Podcast transcript 或文章內容。YouTube 字幕成功時會自動填入。"></textarea>
+  <div class="heading"><div><span class="step-label">STEP 1 · CONTINUE</span><h2>確認原始內容</h2></div><small>英文字幕或文章原文</small></div>
+  <p class="tip">這裡放的是「原本的英文內容」，不是 Gemini 整理後的教材。YouTube 字幕成功時會自動出現在這裡。</p>
+  <textarea id="transcript" rows="9" placeholder="貼上英文逐字稿或文章原文；如果沒有逐字稿，也可以先留空。"></textarea>
   <div class="actions"><small id="captionInfo">尚未載入內容</small><button id="copyTranscript" class="light">複製原始內容</button></div>
 </section>
 
 <section class="panel">
-  <div class="heading"><h2>03　交給 Gemini 製作教材</h2><small>Gemini 負責分析，不直接寫入 Notion</small></div>
-  <button id="makePrompt" class="primary full">產生 Gemini 教材指令</button>
-  <p id="promptStatus" class="status">先填寫教材來源、連結與原始內容，再產生指令。</p>
+  <div class="heading"><div><span class="step-label">STEP 2</span><h2>請 Gemini 幫你製作教材</h2></div><small>只需按一次</small></div>
+  <p class="tip">按下按鈕後，複製產生的指令，貼到 Gemini。Gemini 會依照內容整理單字、片語、文法、例句和英檢練習。</p>
+  <button id="makePrompt" class="primary full">產生「給 Gemini 的指令」</button>
+  <p id="promptStatus" class="status">請先完成 Step 1，再產生指令。</p>
   <div id="promptBox" class="hidden">
-    <label for="prompt">貼到 Gemini 的完整指令</label>
-    <textarea id="prompt" rows="16" readonly></textarea>
-    <div class="actions"><small>Gemini 完成後，將完整教材貼到下一區。</small><button id="copyPrompt" class="primary">複製 Gemini 指令</button></div>
+    <label for="prompt">這段文字要貼到 Gemini</label>
+    <textarea id="prompt" rows="13" readonly></textarea>
+    <div class="actions"><small>複製後，開啟 Gemini 並貼上。</small><button id="copyPrompt" class="primary">複製 Gemini 指令</button></div>
   </div>
 </section>
 
 <section class="panel">
-  <div class="heading"><h2>04　保存教材，交給 GPT 匯入</h2><small>網站會留下待匯入紀錄</small></div>
-  <label for="analysis">Gemini 產生的完整教材</label>
-  <textarea id="analysis" rows="12" placeholder="把 Gemini 產生的教材完整貼在這裡，包含單字、片語、文法、例句、練習等。"></textarea>
+  <div class="heading"><div><span class="step-label">STEP 3</span><h2>把 Gemini 做好的教材貼回來</h2></div><small>最後保存</small></div>
+  <p class="tip">回到 Gemini，複製它產生的完整教材，貼在下面。這份內容會和原始逐字稿一起保存。</p>
+  <label for="analysis">Gemini 整理好的完整教材</label>
+  <textarea id="analysis" rows="10" placeholder="把 Gemini 的完整回答貼在這裡，包含單字、片語、文法、例句和練習。"></textarea>
   <label for="appPassword">網站管理密碼</label>
-  <input id="appPassword" type="password" autocomplete="current-password" placeholder="輸入網站管理密碼">
-  <button id="save" class="primary full">保存到網站待匯入清單</button>
-  <p id="saveStatus" class="status">保存後，網站會記錄來源、原始內容、Gemini 教材及匯入狀態。</p>
+  <input id="appPassword" type="password" autocomplete="current-password" placeholder="輸入管理密碼，才能保存及查看教材紀錄">
+  <button id="save" class="primary full">保存這份教材</button>
+  <p id="saveStatus" class="status">保存後，教材會出現在下方「教材紀錄」。</p>
 </section>
 
 <section class="panel">
-  <div class="heading"><h2>05　教材紀錄</h2><button id="refresh" class="light">重新整理</button></div>
-  <p class="hint">查看已保存的教材。GPT 匯入 Notion 成功後，可在對應紀錄貼上 Notion 頁面連結並標記完成。</p>
-  <div id="library" class="library"><p class="empty">輸入管理密碼後，按「重新整理」載入紀錄。</p></div>
+  <div class="heading"><div><span class="step-label">MY LIBRARY</span><h2>已保存的教材</h2></div><button id="refresh" class="light">重新整理</button></div>
+  <p class="tip">教材保存後會出現在這裡。若要放進 Notion，請照每筆教材卡片中的「交給 GPT 匯入」說明操作。</p>
+  <div id="library" class="library"><p class="empty">先輸入管理密碼，再按「重新整理」查看教材。</p></div>
 </section>
 
 <footer>
-  網站負責收集與保存教材；Gemini 負責教材分析；GPT 使用已連接的 Notion 工具負責匯入與去重。影片發布日期不會自動寫入 Notion 的發布日期欄位，避免錯誤日期。
+  本網站不會自動把教材寫進 Notion。正確流程是：網站保存 → 在教材紀錄複製 GPT 指令 → 貼給 ChatGPT → GPT 匯入 Notion → 把 Notion 頁面連結貼回來標記完成。
 </footer>
 </main>
-<script src="app.js?v=0.5.1"></script>
+<script src="app.js?v=0.6.0"></script>
 </body>
 </html>
