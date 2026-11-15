@@ -1,30 +1,50 @@
-# Mason Learning Hub
+# English Learning Hub
 
-## 一個分享連結 → ChatGPT 整理 → 匯入 Notion
-1. 貼上 YouTube 或 Shorts 網址。
-2. Mason 嘗試取得影片標題、發布日期與公開英文字幕。
-3. 檢查或修改逐字稿；若無法取得字幕，可自行貼上逐字稿。
-4. 輸入網站存取密碼，按 **保存並產生唯一連結**。
-5. 把分享連結貼給一般 ChatGPT，請它讀取逐字稿並完成英文學習整理。
-6. 回到同一個分享連結，把 ChatGPT 的完整 Markdown 結果貼入「ChatGPT 學習整理」欄位，按 **匯入 Notion**。
+多來源英文教材入口：網站負責收集與保存，Gemini 製作教材，GPT 負責匯入 Notion。
 
-分享頁同時支援逐字稿閱讀與 Notion 匯入，不需要 GPT Builder、GPT Action 或另外建立帳號。Notion 寫入由 Cloudflare Worker 使用伺服器端的 NOTION_TOKEN 執行，Token 不會暴露給瀏覽器或 ChatGPT。
+## 使用流程
+1. 選擇來源分類：Mason、Podcast、YouTube 頻道、TED／演講、新聞／媒體、線上課程或其他。
+2. 填入來源名稱、教材形式與教材連結。
+3. YouTube 影片可嘗試自動讀取標題與英文字幕；Podcast、文章及其他平台可手動貼上逐字稿或原文。
+4. 產生 Gemini 指令，將來源資料與原始內容交給 Gemini 製作教材。
+5. 把 Gemini 的完整教材貼回網站，輸入網站管理密碼並保存。
+6. 網站會把原始內容、Gemini 教材與來源資訊保存到 Cloudflare KV，並顯示待 GPT 匯入紀錄。
+7. 在教材紀錄中複製「GPT 匯入指令」，貼給 ChatGPT。GPT 會用已連接的 Notion 工具查重並新增或更新既有資料。
+8. GPT 回報成功後，把 Notion 頁面連結貼回網站，按「標記已匯入」。
 
-## 進階：GPT Action 自動匯入（選用）
-若帳戶支援自訂 GPT Actions，可參考 [GPT_ACTION_SETUP.md](./GPT_ACTION_SETUP.md) 和 [openapi.yaml](./openapi.yaml)，讓 GPT 直接呼叫同一個分享連結完成 POST。一般分享頁的手動貼上匯入仍可正常使用。
+## 來源分類
+- Mason
+- Podcast
+- YouTube 頻道
+- TED／演講
+- 新聞／媒體
+- 線上課程
+- 其他
 
-## 分享連結安全
-Worker 將分享 token 存在 KV。分享網址是持有者即可讀取逐字稿並提交匯入的私密連結，請勿公開張貼或傳給不信任的人。
+來源名稱可自行填寫，亦可使用欄位提示的常見來源。分類不是封閉清單，新增頻道或 Podcast 不需要改程式。
 
-## Worker
-- Worker：`mason-learning-api`
-- Source：`worker/worker.js`
-- Required bindings：`LESSONS` KV、`APP_PASSWORD` secret、`NOTION_TOKEN` secret。
-- Legacy `GPT_READ_KEY` 可保留，供舊的 `/api/pending` 使用。
+## 架構
+- Frontend: GitHub Pages
+- API: Cloudflare Worker `mason-learning-api`
+- Queue/history: Cloudflare KV binding `LESSONS`
+- Notion: 英文教材紀錄 Data Source `418c88fc-35de-814c-be2e-000b30e4594d`
+- Worker secrets: `APP_PASSWORD`, `GPT_READ_KEY`, `NOTION_TOKEN`
 
-## Notion
-既有資料庫 Data Source ID：`418c88fc-35de-814c-be2e-000b30e4594d`
-Properties：影片名稱、影片連結、YouTube 影片 ID、影片發布時間、學習日期、學習狀態。逐字稿與 ChatGPT 分析會儲存在頁面內容區塊。
+## Notion 欄位
+既有欄位保留，另新增：
+- `來源分類`
+- `來源名稱`
+- `教材形式`
 
-## 字幕限制
-YouTube 不保證所有影片都能下載公開字幕。若 Mason 無法取得字幕，請手動貼上逐字稿。
+原始逐字稿／文章與 Gemini 教材會分開放在每筆 Notion 頁面內容。影片發布日期欄位不會由網站自動填寫。
+
+## API
+- `POST /api/queue`: 以網站管理密碼保存教材至 KV。
+- `GET /api/library`: 以網站管理密碼讀取教材歷史。
+- `POST /api/mark-imported`: 以網站管理密碼更新 Notion 匯入狀態與頁面連結。
+- `GET /api/pending?key=...`: 舊 GPT 待匯入清單端點，仍保留。
+- `GET /api/video`、`GET /api/transcript`: YouTube 影片資訊與字幕。
+- 舊分享連結與直接匯入端點仍保留，避免既有連結立即失效。
+
+## 限制
+YouTube 不保證所有影片都能自動取得公開字幕。Podcast、Spotify、Apple Podcasts、文章或其他平台的逐字稿需要手動貼入；網站不會假裝已經取得無法讀取的內容。
