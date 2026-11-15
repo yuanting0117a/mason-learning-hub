@@ -129,7 +129,66 @@ async function save(env,b){
  if(contentBlocks.length>100)await appendBlocks(env,page.id,contentBlocks.slice(100));
  return{url:page.url,id:page.id};
 }
+
+function plainText(items){return (items||[]).map(x=>x.plain_text||x.text?.content||"").join("")}
+async function notionChildren(env,blockId,depth=0){
+ if(depth>4)return [];
+ let out=[],cursor=null;
+ do{
+  const path="/blocks/"+blockId+"/children?page_size=100"+(cursor?"&start_cursor="+encodeURIComponent(cursor):"");
+  const d=await notion(env,path);
+  for(const b of d.results||[]){
+   const v=b[b.type]||{};
+   const item={type:b.type,text:plainText(v.rich_text||v.title),checked:v.checked??null,url:v.url||v.external?.url||v.file?.url||null,language:v.language||null,cells:null,children:[]};
+   if(b.type==="table_row")item.cells=(v.cells||[]).map(plainText);
+   if(b.has_children)item.children=await notionChildren(env,b.id,depth+1);
+   out.push(item);
+  }
+  cursor=d.has_more?d.next_cursor:null;
+ }while(cursor);
+ return out;
+}
+function notionProp(page,name,type){
+ const p=page.properties?.[name];
+ if(!p)return null;
+ if(type==="title")return plainText(p.title);
+ if(type==="select"||type==="status")return p[type]?.name||null;
+ if(type==="date")return p.date?.start||null;
+ if(type==="files")return (p.files||[]).map(x=>x.external?.url||x.file?.url||x.name).filter(Boolean);
+ return null;
+}
+async function notionMaterials(env){
+ let results=[],cursor=null;
+ do{
+  const d=await notion(env,"/data_sources/"+DATA_SOURCE_ID+"/query",{page_size:100,...(cursor?{start_cursor:cursor}:{})});
+  results.push(...(d.results||[]));cursor=d.has_more?d.next_cursor:null;
+ }while(cursor);
+ return Promise.all(results.map(async page=>({
+  id:page.id,url:page.url,
+  number:page.properties?.["序號"]?.unique_id?.prefix&&page.properties?.["序號"]?.unique_id?.number?String(page.properties["序號"].unique_id.prefix)+"-"+page.properties["序號"].unique_id.number:(page.properties?.["序號"]?.number??""),
+  title:notionProp(page,"影片名稱","title")||"未命名教材",
+  channel:notionProp(page,"頻道","select"),
+  category:notionProp(page,"分類","select"),
+  learningStatus:notionProp(page,"學習狀態","status")||notionProp(page,"學習狀態","select"),
+  contentStatus:notionProp(page,"內容狀態","select"),
+  learningDate:notionProp(page,"學習日期","date"),
+  releaseDate:notionProp(page,"影片發布日期","date"),
+  reviewDate:notionProp(page,"最後一次複習日期","date"),
+  links:notionProp(page,"影片連結","files")||[],
+  blocks:await notionChildren(env,page.id)
+ })));
+}
+
 export default{async fetch(req,env){if(req.method==="OPTIONS")return new Response(null,{headers:cors});const u=new URL(req.url);try{if((u.pathname==="/api/check"||u.pathname==="/api/save")&&(!env.APP_PASSWORD||req.headers.get("X-App-Password")!==env.APP_PASSWORD))return reply({error:"密碼錯誤或尚未設定 APP_PASSWORD"},401);if(u.pathname==="/api/health")return reply({ok:true,service:"mason-learning-hub"});
+
+if(u.pathname==="/api/materials"&&req.method==="GET"){
+ if(!env.NOTION_TOKEN)return reply({error:"尚未設定 Notion 連線"},503);
+ if(!env.APP_PASSWORD||req.headers.get("X-App-Password")!==env.APP_PASSWORD)return reply({error:"請輸入網站管理密碼"},401);
+ const items=await notionMaterials(env);
+ items.sort((a,b)=>String(b.learningDate||"").localeCompare(String(a.learningDate||"")));
+ return reply({count:items.length,items});
+}
+
 if(u.pathname==="/api/queue"&&req.method==="POST"){
  if(!env.APP_PASSWORD||req.headers.get("X-App-Password")!==env.APP_PASSWORD)return reply({error:"網站存取密碼錯誤或尚未設定"},401);
  if(!env.LESSONS)return reply({error:"待整理資料庫尚未綁定"},503);
