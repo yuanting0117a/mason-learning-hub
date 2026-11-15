@@ -130,7 +130,7 @@ async function save(env,b){
  return{url:page.url,id:page.id};
 }
 
-function plainText(items){return (items||[]).map(x=>x.plain_text||x.text?.content||"").join("")}
+function plainText(items){if(typeof items==="string")return items;return (items||[]).map(x=>x.plain_text||x.text?.content||"").join("")}
 async function notionChildren(env,blockId,depth=0){
  if(depth>4)return [];
  let out=[],cursor=null;
