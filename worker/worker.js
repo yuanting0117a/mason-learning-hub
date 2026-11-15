@@ -120,7 +120,7 @@ async function save(env,b){
   "學習狀態":{select:{name:"待學習"}},
   "學習日期":{date:{start:new Date().toISOString().slice(0,10)}},
   "來源分類":{select:{name:sourceType}},
-  "來源名稱":{rich_text:rt(sourceName)},
+  "來源名稱":{rich_text:sourceName?rt(sourceName):[]},
   "教材形式":{select:{name:contentType}},
   "內容狀態":{select:{name:b.analysis?"有內容":(b.transcript?"部分內容":"沒內容")}}
  };
