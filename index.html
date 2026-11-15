@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f5f7fa">
 <title>English Learning Hub</title>
-<link rel="stylesheet" href="styles.css?v=0.5.0">
+<link rel="stylesheet" href="styles.css?v=0.5.1">
 </head>
 <body>
 <main class="wrap">
@@ -15,7 +15,7 @@
     <h1>English Learning Hub</h1>
     <p class="sub">多來源教材收集・Gemini 製作教材・GPT 匯入 Notion</p>
   </div>
-  <span class="tag">v0.5.0</span>
+  <span class="tag">v0.5.1</span>
 </header>
 
 <section class="intro">
@@ -52,7 +52,7 @@
     </div>
   </div>
   <label for="sourceName">頻道／Podcast／來源名稱</label>
-  <input id="sourceName" list="sourceSuggestions" placeholder="例如：Mason、BBC Learning English、TED Talks、Luke's English Podcast">
+  <input id="sourceName" list="sourceSuggestions" value="Mason" placeholder="例如：Mason、BBC Learning English、TED Talks、Luke's English Podcast">
   <datalist id="sourceSuggestions">
     <option value="Mason"></option>
     <option value="BBC Learning English"></option>
@@ -114,6 +114,6 @@
   網站負責收集與保存教材；Gemini 負責教材分析；GPT 使用已連接的 Notion 工具負責匯入與去重。影片發布日期不會自動寫入 Notion 的發布日期欄位，避免錯誤日期。
 </footer>
 </main>
-<script src="app.js?v=0.5.0"></script>
+<script src="app.js?v=0.5.1"></script>
 </body>
 </html>
