@@ -33,7 +33,7 @@ $("makePrompt").onclick=()=>{
 - 影片名稱：${title}
 - YouTube 連結：${canonical}
 - YouTube Video ID：${id}
-- 發布日期：${published}\n- 日期來源：${publishedSource}\n- 日期擷取規則：先讀 YouTube 影片頁面 metadata；若未取得，再讀 YouTube RSS；仍無資料才標示「尚未取得」，不可自行猜測。
+- 發布日期：${published}\n- 日期來源：${publishedSource}\n- 日期擷取規則：Worker 會依序讀取一般影片頁面與 Shorts 頁面，解析播放器資料、datePublished／uploadDate 等結構化資料及 Meta 標籤，再以 YouTube RSS 備援；仍無資料才標示「尚未取得」，不可自行猜測。
 
 ## 原始英文逐字稿
 ${transcript}
