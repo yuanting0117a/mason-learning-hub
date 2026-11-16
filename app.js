@@ -191,7 +191,7 @@ function makeGptPrompt(){
 
 ## 3. Notion 匯入前：先讀取既有資料庫結構
 請使用 Notion connector：
-1. 先讀取 Data Source ID `418c88fc-35de-814c-be2e-000b30e4594d` 的資料庫結構／欄位 schema，確認實際存在的 property 名稱、型態及選項。
+1. 先讀取 Data Source ID '418c88fc-35de-814c-be2e-000b30e4594d' 的資料庫結構／欄位 schema，確認實際存在的 property 名稱、型態及選項。
 2. 只使用資料庫現有欄位與合法選項。不要假設欄位名稱一定與本提示詞相同；請依實際 schema 對應。
 3. 不得新增資料庫、不得任意新增 select 選項，也不得改動資料庫 schema。
 4. 將完整教材放入該筆 Notion 頁面的正文區塊（page body），不要只塞進摘要欄位。若內容太長，依 Notion API／connector 限制分段寫入，並確認所有區塊都成功建立。
