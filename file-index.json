@@ -1,4 +1,18 @@
 {
   "version": 1,
-  "files": []
+  "files": [
+    {
+      "id": "1794921801175-1-股票.txt",
+      "name": "股票.txt",
+      "path": "files/1794921801175-1-股票.txt",
+      "size": 14505,
+      "type": "txt",
+      "category": "長久學習",
+      "tags": [
+        "股票"
+      ],
+      "description": "新手股票遊戲練習",
+      "updated": "2026-11-17"
+    }
+  ]
 }
