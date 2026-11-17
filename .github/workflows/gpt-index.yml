@@ -1,0 +1,130 @@
+name: Build GPT-readable file index
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "files/**"
+      - "file-index.json"
+      - ".github/workflows/gpt-index.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gpt-readable-index
+  cancel-in-progress: false
+
+jobs:
+  build-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install OCR dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tesseract-ocr tesseract-ocr-chi-tra tesseract-ocr-eng
+          python -m pip install --upgrade pip
+          pip install pymupdf pillow pytesseract
+
+      - name: Extract text and build index
+        run: |
+          python <<'PY'
+          import json
+          from pathlib import Path
+          from urllib.parse import quote
+          import fitz
+          from PIL import Image
+          import pytesseract
+
+          root = Path(".")
+          manifest = json.loads((root / "file-index.json").read_text(encoding="utf-8"))
+          sections = [
+              "# Mason — GPT-readable file index",
+              "",
+              "> Automatically generated from file-index.json. Original files remain unchanged.",
+              "> This index provides searchable text and source links. Image links may still require direct image access to inspect visual details.",
+              "",
+          ]
+
+          def extract_pdf(path):
+              doc = fitz.open(path)
+              chunks = []
+              for page_no, page in enumerate(doc, start=1):
+                  text = page.get_text("text").strip()
+                  if len(text) < 40:
+                      try:
+                          pix = page.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False)
+                          import io
+                          image = Image.open(io.BytesIO(pix.tobytes("png")))
+                          ocr = pytesseract.image_to_string(image, lang="chi_tra+eng")
+                          if len(ocr.strip()) > len(text):
+                              text = ocr.strip()
+                      except Exception as exc:
+                          text = text + f"\n[OCR unavailable on page {page_no}: {exc}]"
+                  if text:
+                      chunks.append(f"### Page {page_no}\n\n{text}")
+              doc.close()
+              return "\n\n".join(chunks)
+
+          def extract_file(path, suffix):
+              if suffix == ".pdf":
+                  return extract_pdf(path)
+              if suffix in {".png", ".jpg", ".jpeg", ".webp", ".tif", ".tiff", ".bmp"}:
+                  return pytesseract.image_to_string(Image.open(path), lang="chi_tra+eng").strip()
+              if suffix in {".txt", ".md", ".csv", ".json"}:
+                  return path.read_text(encoding="utf-8", errors="replace")
+              return ""
+
+          for item in manifest.get("files", []):
+              rel = item.get("path", "")
+              path = root / rel
+              name = item.get("name") or path.name
+              if not path.is_file():
+                  sections.extend([f"## {name}", "", f"- Status: source file not found ({rel})", ""])
+                  continue
+
+              encoded = quote(rel, safe="/")
+              raw_url = "https://raw.githubusercontent.com/yuanting0117a/mason-learning-hub/main/" + encoded
+              pages_url = "https://yuanting0117a.github.io/mason-learning-hub/" + encoded
+              sections.extend([
+                  f"## {name}",
+                  "",
+                  f"- Category: {item.get('category', '未分類')}",
+                  f"- Tags: {', '.join(item.get('tags', [])) or '無'}",
+                  f"- Description: {item.get('description', '') or '無'}",
+                  f"- Original file: {pages_url}",
+                  f"- Raw source: {raw_url}",
+              ])
+              if path.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".gif"}:
+                  sections.append(f"![{name}]({raw_url})")
+              sections.append("")
+              try:
+                  extracted = extract_file(path, path.suffix.lower())
+                  if extracted:
+                      sections.extend(["### Extracted text / OCR", "", extracted[:60000], ""])
+                  else:
+                      sections.extend(["### Extracted text / OCR", "", "_No text detected. Use the original file link for visual inspection._", ""])
+              except Exception as exc:
+                  sections.extend(["### Extraction error", "", f"{type(exc).__name__}: {exc}", ""])
+              sections.extend(["---", ""])
+
+          output = "\n".join(sections).rstrip() + "\n"
+          (root / "gpt-index.md").write_text(output, encoding="utf-8")
+          print(f"Generated gpt-index.md for {len(manifest.get('files', []))} files.")
+          PY
+
+      - name: Commit updated index
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gpt-index.md
+          if git diff --cached --quiet; then
+            echo "Index is already up to date."
+          else
+            git commit -m "chore: rebuild GPT-readable file index"
+            git push
+          fi
