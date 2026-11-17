@@ -25,10 +25,13 @@
 ## 架構
 
 - Frontend：GitHub Pages
-- API：Cloudflare Worker `mason-learning-api`
-- Notion：英文教材紀錄 Data Source
+- 檔案儲存：GitHub Repository 的公開 `files/` 資料夾
+- 上傳方式：瀏覽器直接呼叫 GitHub Contents API，不經過 Cloudflare Worker
+- GitHub Token：由管理者在瀏覽器輸入，只保留於目前分頁記憶體；不寫入 Repository，也不傳給 Cloudflare
+- 檔案清單：上傳成功後由瀏覽器直接更新 `file-index.json`
 
 ## 版本
 
+- v1.0.0：移除 Cloudflare Worker 上傳流程，改由瀏覽器直接上傳 GitHub；Token 僅保留在分頁記憶體。
 - v0.8.0：加入手動發布日期、Gemini 提示詞、Gemini 結果貼上區、GPT 檢查／匯入提示詞及整份複製。
 - v0.7.0：Notion 唯讀教材庫。
