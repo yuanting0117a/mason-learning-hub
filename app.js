@@ -10,6 +10,7 @@ function safePath(path){
  return path.split("/").map(encodeURIComponent).join("/");
 }
 function fileUrl(file){const path=safePath(file.path);return path?new URL(path,document.baseURI).href:null}
+function shareUrl(file){const path=safePath(file.path);return path?"https://yuanting0117a.github.io/mason-learning-hub/"+path:null}
 function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function prettyDate(value){if(!value)return "日期未提供";const d=new Date(value+"T00:00:00");return Number.isNaN(d.getTime())?value:d.toLocaleDateString("zh-TW",{year:"numeric",month:"2-digit",day:"2-digit"})}
 function prettySize(size){if(!Number.isFinite(Number(size))||Number(size)<0)return "";const n=Number(size);return n<1024? n+" B":n<1048576?(n/1024).toFixed(1)+" KB":(n/1048576).toFixed(1)+" MB"}
@@ -31,7 +32,7 @@ function render(){
    '<p class="file-description">'+escapeHtml(f.description||"尚未提供檔案說明。")+'</p>'+
    '<div class="file-tags">'+(f.category?'<span>'+escapeHtml(f.category)+'</span>':"")+tags+'</div>'+
    '<div class="file-meta"><span>'+escapeHtml(prettyDate(f.updated))+'</span><span>'+escapeHtml(f.category||"未分類")+'</span></div>'+
-   '<div class="card-actions">'+(url&&(["pdf",...IMAGE_TYPES,...TEXT_TYPES].includes(ext))?'<button type="button" data-preview="'+escapeHtml(f.id)+'">預覽</button>':'')+(url?'<a class="download" href="'+escapeHtml(url)+'" download>下載檔案 ↓</a>':'<span>檔案路徑無效</span>')+'</div>'+
+   '<div class="card-actions">'+(url&&(["pdf",...IMAGE_TYPES,...TEXT_TYPES].includes(ext))?'<button type="button" data-preview="'+escapeHtml(f.id)+'">預覽</button>':'')+(url?'<button type="button" data-share="'+escapeHtml(f.id)+'">分享連結</button><a class="download" href="'+escapeHtml(url)+'" download>下載檔案 ↓</a>':'<span>檔案路徑無效</span>')+'</div>'+
    '</article>';
  }).join(""):'<div class="empty-state"><strong>找不到符合條件的檔案</strong>請調整搜尋文字或篩選條件。</div>';
 }
@@ -72,7 +73,21 @@ async function showPreview(id){
   body.innerHTML='<div class="unsupported">此格式不支援瀏覽器內預覽。<br>請使用下方按鈕下載後開啟。</div>';
  }
 }
+async function shareFile(id,button){
+ const file=files.find(f=>String(f.id)===String(id));if(!file)return;
+ const url=shareUrl(file);if(!url)return;
+ try{
+  await navigator.clipboard.writeText(url);
+  const original=button.textContent;button.textContent="已複製連結";
+  button.disabled=true;
+  setTimeout(()=>{button.textContent=original;button.disabled=false},1800);
+ }catch(error){
+  window.prompt("複製以下公開分享連結：",url);
+ }
+}
 $("fileGrid").addEventListener("click",event=>{
+ const shareButton=event.target.closest("[data-share]");
+ if(shareButton){shareFile(shareButton.dataset.share,shareButton);return}
  const button=event.target.closest("[data-preview]");if(button)showPreview(button.dataset.preview);
 });
 $("closePreview").addEventListener("click",()=>$("previewDialog").close());
