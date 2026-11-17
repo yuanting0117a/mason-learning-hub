@@ -60,3 +60,24 @@ footer{display:flex;justify-content:space-between;gap:16px;margin-top:22px;font-
 .download-button{background:#263f65;color:#fff;padding:10px 15px;border-radius:9px;font-size:11px;font-weight:750}
 @media(max-width:900px){.file-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hero-art{transform:scale(.85);transform-origin:right center;margin-left:-25px}}
 @media(max-width:640px){.shell{width:calc(100% - 28px);padding-top:16px}.hero{padding:25px 22px;min-height:190px}.hero-art{display:none}.toolbar{grid-template-columns:1fr 1fr}.searchbox{grid-column:1/-1}.file-grid{grid-template-columns:1fr}.file-description{min-height:0}.summary-row{align-items:center}.manage-link{white-space:nowrap}.upload-guide{padding:16px}.upload-guide p{font-size:10px}footer{display:block}footer span{display:block;margin:3px 0}.version{font-size:9px}}
+
+/* v0.9.1 authenticated uploads */
+.upload-panel{background:#fff;border:1px solid #dfe6ef;border-radius:16px;padding:22px;margin:0 0 25px;box-shadow:0 5px 18px #15223806}
+.upload-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:16px}
+.upload-heading h2{font-size:18px;margin:0 0 5px}.upload-heading p:last-child{font-size:11px;color:#7b8798;margin:0;line-height:1.7}
+.admin-lock{font-size:10px;color:#657994;background:#edf2f8;border-radius:20px;padding:7px 10px;white-space:nowrap}
+.upload-auth{max-width:420px;margin-bottom:14px}.upload-auth input,.upload-fields input{height:41px;border:1px solid #dfe5ed;border-radius:9px;padding:0 11px;width:100%;font-size:12px;outline:none}
+.drop-zone{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;min-height:150px;border:1.5px dashed #b9c8dc;border-radius:13px;background:#f8fafd;color:#344963;text-align:center;padding:18px;cursor:pointer;transition:.15s}
+.drop-zone.dragover{background:#edf4ff;border-color:#547cb5}.drop-zone input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.upload-symbol{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#e8eef7;color:#42658f;font-size:23px;font-weight:500}
+.drop-zone strong{font-size:12px}.drop-zone small{font-size:10px;color:#8995a5;font-weight:400}
+.selected-files{font-size:10px;color:#526984;overflow-wrap:anywhere}
+.upload-fields{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:14px}.upload-fields .full{grid-column:1/-1}
+.upload-controls{display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap}
+.upload-controls button{background:#263f65;color:white;padding:11px 17px}.upload-controls button:disabled{opacity:.45;cursor:not-allowed}
+.upload-controls span{font-size:10px;color:#8995a5}.upload-controls span.error{color:#b5473b}.upload-controls span.success{color:#187044}
+.upload-progress-list{display:grid;gap:8px;margin-top:12px}
+.upload-progress-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 12px;padding:10px 12px;background:#f7f9fc;border:1px solid #e9edf3;border-radius:9px}
+.upload-progress-item strong{font-size:11px;overflow-wrap:anywhere;font-weight:650}.upload-progress-item small{font-size:10px;color:#8793a3}
+.upload-progress-item progress{grid-column:1/-1;width:100%;height:6px;accent-color:#426a9e}
+@media(max-width:600px){.upload-panel{padding:16px}.upload-fields{grid-template-columns:1fr}.upload-fields .full{grid-column:auto}.upload-heading{display:block}.admin-lock{display:inline-block;margin-top:9px}.upload-controls button{width:100%}}
