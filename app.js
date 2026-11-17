@@ -84,7 +84,8 @@ loadIndex();
 
 /* v0.9.1 direct upload through authenticated Cloudflare Worker */
 const API_BASE="https://mason-learning-api.yuanting0117a.workers.dev";
-let selectedUploads=[];\nlet githubReady=false;
+let selectedUploads=[];
+let githubReady=false;
 function setUploadStatus(message,type=""){const el=$("uploadStatus");el.textContent=message;el.className=type}
 function showSelectedFiles(){
  const el=$("selectedFiles");
