@@ -82,105 +82,146 @@ $("categoryFilter").addEventListener("change",render);
 $("typeFilter").addEventListener("change",render);
 loadIndex();
 
-/* v0.9.1 direct upload through authenticated Cloudflare Worker */
-const API_BASE="https://mason-learning-api.yuanting0117a.workers.dev";
+/* v1.0.0 direct browser-to-GitHub uploads; no Cloudflare upload proxy */
+const GITHUB_OWNER="yuanting0117a";
+const GITHUB_REPO="mason-learning-hub";
+const GITHUB_BRANCH="main";
+const GITHUB_API="https://api.github.com";
+const MAX_UPLOAD_SIZE=8*1024*1024;
 let selectedUploads=[];
+let githubToken="";
 let githubReady=false;
 function setUploadStatus(message,type=""){const el=$("uploadStatus");el.textContent=message;el.className=type}
 function showSelectedFiles(){
  const el=$("selectedFiles");
  el.textContent=selectedUploads.length?selectedUploads.map(f=>f.name+" ("+prettySize(f.size)+")").join("、"):"尚未選擇檔案";
- $("uploadButton").disabled=!selectedUploads.length||!$("adminPassword").value.trim()||!githubReady;
+ $("uploadButton").disabled=!selectedUploads.length||!githubReady;
 }
 function chooseFiles(list){
  const incoming=Array.from(list||[]);
- const seen=new Set(selectedUploads.map(f=>f.name+":"+f.size+":"+f.lastModified));
- for(const f of incoming){const key=f.name+":"+f.size+":"+f.lastModified;if(!seen.has(key)){selectedUploads.push(f);seen.add(key)}}
+ const byKey=new Map(selectedUploads.map(f=>[f.name+":"+f.size+":"+f.lastModified,f]));
+ for(const f of incoming)byKey.set(f.name+":"+f.size+":"+f.lastModified,f);
+ selectedUploads=Array.from(byKey.values());
  showSelectedFiles();
 }
 $("fileInput").addEventListener("change",e=>chooseFiles(e.target.files));
-$("adminPassword").addEventListener("input",showSelectedFiles);
 const dropZone=$("dropZone");
 ["dragenter","dragover"].forEach(name=>dropZone.addEventListener(name,e=>{e.preventDefault();dropZone.classList.add("dragover")}));
 ["dragleave","drop"].forEach(name=>dropZone.addEventListener(name,e=>{e.preventDefault();dropZone.classList.remove("dragover")}));
 dropZone.addEventListener("drop",e=>chooseFiles(e.dataTransfer.files));
-function uploadOne(file,password,index,total){
- return new Promise((resolve,reject)=>{
-  const row=document.createElement("div");row.className="upload-progress-item";
-  const name=document.createElement("strong");name.textContent=file.name;
-  const status=document.createElement("small");status.textContent="準備上傳";
-  const progress=document.createElement("progress");progress.max=100;progress.value=0;
-  row.append(name,status,progress);$("uploadProgressList").append(row);
-  const form=new FormData();form.append("file",file,file.name);
-  form.append("category",$("uploadCategory").value.trim());
-  form.append("tags",$("uploadTags").value.trim());
-  form.append("description",$("uploadDescription").value.trim());
-  const xhr=new XMLHttpRequest();xhr.open("POST",API_BASE+"/api/files/upload");
-  xhr.setRequestHeader("X-App-Password",password);
-  xhr.upload.onprogress=e=>{if(e.lengthComputable){const percent=Math.round(e.loaded/e.total*100);progress.value=percent;status.textContent=percent+"%"}};
-  xhr.onload=()=>{
-   let data={};try{data=JSON.parse(xhr.responseText)}catch{}
-   if(xhr.status>=200&&xhr.status<300&&data.uploaded){
-    progress.value=100;status.textContent="完成";
-    files.unshift(data.item);
-    populateFilter("categoryFilter",[...new Set(files.map(x=>x.category))],"全部分類");
-    populateFilter("typeFilter",[...new Set(files.map(extOf))],"全部格式");
-    render();resolve(data.item);
-   }else{status.textContent="失敗";reject(new Error(data.error||"上傳失敗（HTTP "+xhr.status+"）"))}
-  };
-  xhr.onerror=()=>{status.textContent="連線失敗";reject(new Error("無法連線到上傳服務。"))};
-  xhr.onabort=()=>{status.textContent="已取消";reject(new Error("上傳已取消。"))};
-  xhr.send(form);
+function githubHeaders(json=false){
+ const headers={"Authorization":"Bearer "+githubToken,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"};
+ if(json)headers["Content-Type"]="application/json";
+ return headers;
+}
+async function githubRequest(url,options={}){
+ const response=await fetch(url,{...options,headers:{...githubHeaders(!!options.body),...(options.headers||{})}});
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok)throw new Error(data.message||"GitHub API 錯誤（HTTP "+response.status+"）");
+ return data;
+}
+async function connectGithub(){
+ const token=$("githubToken").value.trim();
+ if(!token){$("githubStatus").textContent="請貼上 GitHub Token。";$("githubStatus").className="error";return}
+ const button=$("connectGithub");button.disabled=true;button.textContent="正在驗證…";
+ githubToken=token;
+ try{
+  await githubRequest(GITHUB_API+"/repos/"+GITHUB_OWNER+"/"+GITHUB_REPO+"/contents/file-index.json");
+  githubReady=true;
+  $("githubToken").value="";
+  $("githubStatus").textContent="GitHub 已連線。Token 僅保留在目前分頁記憶體中。";
+  $("githubStatus").className="success";
+ }catch(error){
+  githubToken="";githubReady=false;
+  $("githubStatus").textContent="連線失敗："+error.message+"。請確認 Token 有此 Repository 的 Contents 讀寫權限。";
+  $("githubStatus").className="error";
+ }finally{
+  button.disabled=false;button.textContent="連線 GitHub";showSelectedFiles();
+ }
+}
+$("connectGithub").addEventListener("click",connectGithub);
+function safeGitHubFilename(name){
+ return String(name||"file").normalize("NFC").replace(/[\/\\?%*:|"<>]/g,"_").replace(/^\.+/,"").trim()||"file";
+}
+function toBase64(file){
+ return file.arrayBuffer().then(buffer=>{
+  const bytes=new Uint8Array(buffer);let binary="";
+  const chunk=0x8000;
+  for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,Math.min(i+chunk,bytes.length)));
+  return btoa(binary);
  });
 }
+async function putGitHubFile(path,content,message,sha){
+ const body={message,content,branch:GITHUB_BRANCH};
+ if(sha)body.sha=sha;
+ return githubRequest(GITHUB_API+"/repos/"+GITHUB_OWNER+"/"+GITHUB_REPO+"/contents/"+path,{
+  method:"PUT",body:JSON.stringify(body)
+ });
+}
+async function getManifest(){
+ const data=await githubRequest(GITHUB_API+"/repos/"+GITHUB_OWNER+"/"+GITHUB_REPO+"/contents/file-index.json?ref="+GITHUB_BRANCH);
+ const binary=atob(data.content.replace(/\n/g,""));
+ const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+ const decoded=new TextDecoder().decode(bytes);
+ return {sha:data.sha,manifest:JSON.parse(decoded)};
+}
+async function uploadOne(file,index,total){
+ const row=document.createElement("div");row.className="upload-progress-item";
+ const name=document.createElement("strong");name.textContent=file.name;
+ const status=document.createElement("small");status.textContent="讀取檔案…";
+ const progress=document.createElement("progress");progress.max=100;progress.value=0;
+ row.append(name,status,progress);$("uploadProgressList").append(row);
+ try{
+  if(file.size===0)throw new Error("檔案大小為 0 B；請確認檔案已儲存，再重新選取。");
+  if(file.size>MAX_UPLOAD_SIZE)throw new Error("超過 8 MB 上限。");
+  const base64=await toBase64(file);
+  const safeName=safeGitHubFilename(file.name);
+  const uniqueName=Date.now()+"-"+index+"-"+safeName;
+  const path="files/"+uniqueName;
+  status.textContent="上傳至 GitHub…";progress.value=15;
+  await putGitHubFile(path,base64,"Add file: "+safeName);
+  progress.value=70;status.textContent="更新檔案索引…";
+  const {sha,manifest}=await getManifest();
+  if(!Array.isArray(manifest.files))manifest.files=[];
+  const ext=(safeName.split(".").pop()||"file").toLowerCase();
+  const item={
+   id:uniqueName,
+   name:file.name,
+   path,
+   size:file.size,
+   type:ext,
+   category:$("uploadCategory").value.trim()||"未分類",
+   tags:$("uploadTags").value.split(/[,，]/).map(x=>x.trim()).filter(Boolean),
+   description:$("uploadDescription").value.trim(),
+   updated:new Date().toISOString().slice(0,10)
+  };
+  manifest.files.unshift(item);
+  await putGitHubFile("file-index.json",btoa(unescape(encodeURIComponent(JSON.stringify(manifest,null,2)+"\n"))),"Update file index: "+safeName,sha);
+  progress.value=100;status.textContent="完成";
+  return item;
+ }catch(error){status.textContent="失敗";throw error}
+}
 $("uploadButton").addEventListener("click",async()=>{
- const password=$("adminPassword").value.trim();
- if(!password){setUploadStatus("請輸入網站管理密碼。","error");return}
+ if(!githubReady||!githubToken){setUploadStatus("請先連線 GitHub。","error");return}
  if(!selectedUploads.length)return;
  const batch=selectedUploads.slice();
  $("uploadButton").disabled=true;$("fileInput").disabled=true;
  $("uploadProgressList").replaceChildren();
- let completed=0,failed=[];
- setUploadStatus("準備上傳 "+batch.length+" 個檔案……");
+ let completed=0;const failed=[];
+ setUploadStatus("直接上傳至 GitHub，共 "+batch.length+" 個檔案…");
  for(let i=0;i<batch.length;i++){
-  const file=batch[i];
-  if(file.size>8*1024*1024){failed.push(file.name+"：超過 8 MB");continue}
-  try{await uploadOne(file,password,i+1,batch.length);completed++}
-  catch(error){failed.push(file.name+"："+error.message)}
+  try{
+   const item=await uploadOne(batch[i],i+1,batch.length);
+   files.unshift(item);completed++;
+   populateFilter("categoryFilter",[...new Set(files.map(x=>x.category))],"全部分類");
+   populateFilter("typeFilter",[...new Set(files.map(extOf))],"全部格式");
+   render();
+  }catch(error){failed.push(batch[i].name+"："+error.message)}
   setUploadStatus("已完成 "+completed+" / "+batch.length+(failed.length?"；失敗 "+failed.length+" 個":""));
  }
  selectedUploads=[];$("fileInput").value="";showSelectedFiles();
- $("uploadButton").disabled=true;$("fileInput").disabled=false;
+ $("fileInput").disabled=false;
  if(failed.length)setUploadStatus("完成 "+completed+" 個；失敗 "+failed.length+" 個："+failed.join("；"),"error");
- else setUploadStatus("全部 "+completed+" 個檔案已上傳並加入檔案清單。","success");
+ else setUploadStatus("全部 "+completed+" 個檔案已直接上傳 GitHub，並更新公開檔案清單。","success");
 });
 showSelectedFiles();
-
-async function checkGithubConnection(){
- const password=$("adminPassword").value.trim();
- if(!password){githubReady=false;$("githubStatus").textContent="請先輸入網站管理密碼。";$("githubStatus").className="";showSelectedFiles();return}
- try{
-  const response=await fetch(API_BASE+"/api/files/status",{headers:{"X-App-Password":password}});
-  const data=await response.json();
-  if(!response.ok)throw new Error(data.error||"無法檢查 GitHub 連線");
-  githubReady=!!data.configured;
-  $("githubStatus").textContent=githubReady?"GitHub 已連線，可以上傳檔案。":"尚未設定 GitHub Token。請建立 Fine-grained Token 並安全儲存。";
-  $("githubStatus").className=githubReady?"success":"";
- }catch(error){githubReady=false;$("githubStatus").textContent=error.message;$("githubStatus").className="error"}
- showSelectedFiles();
-}
-$("adminPassword").addEventListener("change",checkGithubConnection);
-$("adminPassword").addEventListener("blur",()=>{if($("adminPassword").value.trim()&&!githubReady)checkGithubConnection()});
-$("connectGithub").addEventListener("click",async()=>{
- const password=$("adminPassword").value.trim(),token=$("githubToken").value.trim();
- if(!password){$("githubStatus").textContent="請先輸入網站管理密碼。";$("githubStatus").className="error";return}
- if(!token){$("githubStatus").textContent="請貼上 GitHub Token。";$("githubStatus").className="error";return}
- const button=$("connectGithub");button.disabled=true;button.textContent="正在驗證…";
- try{
-  const response=await fetch(API_BASE+"/api/files/connect",{method:"POST",headers:{"Content-Type":"application/json","X-App-Password":password},body:JSON.stringify({token})});
-  const data=await response.json();if(!response.ok)throw new Error(data.error||"Token 設定失敗");
-  $("githubToken").value="";githubReady=true;
-  $("githubStatus").textContent="GitHub 已連線，Token 已加密儲存。現在可以上傳檔案。";$("githubStatus").className="success";
- }catch(error){githubReady=false;$("githubStatus").textContent=error.message;$("githubStatus").className="error"}
- finally{button.disabled=false;button.textContent="安全儲存 Token";showSelectedFiles()}
-});
