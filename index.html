@@ -27,6 +27,23 @@
     <div class="hero-art" aria-hidden="true"><div class="file-icon pdf">PDF</div><div class="file-icon md">MD</div><div class="file-icon img">IMG</div></div>
   </section>
 
+  <section class="upload-panel" aria-labelledby="uploadTitle">
+    <div class="upload-heading"><div><p class="eyebrow">ADMIN UPLOAD</p><h2 id="uploadTitle">上傳檔案</h2><p>使用網站管理密碼，直接把檔案放進公開檔案庫。</p></div><span class="admin-lock">管理者功能</span></div>
+    <div class="upload-auth"><label for="adminPassword">網站管理密碼</label><input id="adminPassword" type="password" autocomplete="current-password" placeholder="輸入原本的網站管理密碼"></div>
+    <label class="drop-zone" id="dropZone" for="fileInput">
+      <input id="fileInput" type="file" multiple>
+      <span class="upload-symbol">↑</span><strong>拖曳檔案到這裡，或點擊選擇檔案</strong><small>可一次選取多個檔案；單一檔案上限 8 MB</small>
+      <span id="selectedFiles" class="selected-files">尚未選擇檔案</span>
+    </label>
+    <div class="upload-fields">
+      <div><label for="uploadCategory">檔案分類</label><input id="uploadCategory" type="text" placeholder="例如：英文教材、課堂筆記"></div>
+      <div><label for="uploadTags">標籤（以逗號分隔）</label><input id="uploadTags" type="text" placeholder="例如：英檢, 閱讀, 文法"></div>
+      <div class="full"><label for="uploadDescription">檔案說明（選填）</label><input id="uploadDescription" type="text" maxlength="500" placeholder="簡短說明這份檔案的內容"></div>
+    </div>
+    <div class="upload-controls"><button id="uploadButton" type="button" disabled>開始上傳</button><span id="uploadStatus" role="status">請先輸入管理密碼並選擇檔案。</span></div>
+    <div id="uploadProgressList" class="upload-progress-list" aria-live="polite"></div>
+  </section>
+
   <section class="toolbar" aria-label="檔案搜尋與篩選">
     <label class="searchbox"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="搜尋檔名、說明或標籤…" autocomplete="off"></label>
     <select id="categoryFilter" aria-label="依分類篩選"><option value="">全部分類</option></select>
