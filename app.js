@@ -12,7 +12,7 @@ function safePath(path){
 function fileUrl(file){const path=safePath(file.path);return path?new URL(path,document.baseURI).href:null}
 function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function prettyDate(value){if(!value)return "日期未提供";const d=new Date(value+"T00:00:00");return Number.isNaN(d.getTime())?value:d.toLocaleDateString("zh-TW",{year:"numeric",month:"2-digit",day:"2-digit"})}
-function prettySize(size){if(!Number.isFinite(Number(size))||Number(size)<=0)return "";const n=Number(size);return n<1024? n+" B":n<1048576?(n/1024).toFixed(1)+" KB":(n/1048576).toFixed(1)+" MB"}
+function prettySize(size){if(!Number.isFinite(Number(size))||Number(size)<0)return "";const n=Number(size);return n<1024? n+" B":n<1048576?(n/1024).toFixed(1)+" KB":(n/1048576).toFixed(1)+" MB"}
 function populateFilter(id,values,label){const el=$(id);el.innerHTML='<option value="">'+label+'</option>'+values.filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b),"zh-TW")).map(v=>'<option value="'+escapeHtml(v)+'">'+escapeHtml(v)+'</option>').join("")}
 function render(){
  const q=$("searchInput").value.trim().toLocaleLowerCase(),category=$("categoryFilter").value,type=$("typeFilter").value;
@@ -154,7 +154,8 @@ function toBase64(file){
 async function putGitHubFile(path,content,message,sha){
  const body={message,content,branch:GITHUB_BRANCH};
  if(sha)body.sha=sha;
- return githubRequest(GITHUB_API+"/repos/"+GITHUB_OWNER+"/"+GITHUB_REPO+"/contents/"+path,{
+ const encodedPath=path.split("/").map(encodeURIComponent).join("/");
+ return githubRequest(GITHUB_API+"/repos/"+GITHUB_OWNER+"/"+GITHUB_REPO+"/contents/"+encodedPath,{
   method:"PUT",body:JSON.stringify(body)
  });
 }
