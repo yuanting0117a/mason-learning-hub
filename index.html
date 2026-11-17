@@ -3,92 +3,59 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#f5f7fa">
-<title>英文教材庫</title>
-<link rel="stylesheet" href="styles.css?v=0.8.2">
+<meta name="theme-color" content="#f4f6fa">
+<meta name="description" content="公開檔案庫：集中瀏覽、搜尋、預覽與下載教材及文件。">
+<title>公開檔案庫</title>
+<link rel="stylesheet" href="styles.css?v=0.9.0">
 </head>
 <body>
-<main class="wrap">
-<header>
-  <div>
-    <p class="eyebrow">PERSONAL ENGLISH MATERIALS</p>
-    <h1>英文教材庫</h1>
-    <p class="sub">教材製作、提示詞產生與 Notion 閱讀管理</p>
-  </div>
-  <span class="tag">v0.8.2</span>
-</header>
+<main class="shell">
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="公開檔案庫首頁">
+      <span class="brand-mark">F</span>
+      <span><strong>檔案庫</strong><small>PUBLIC FILE LIBRARY</small></span>
+    </a>
+    <span class="version">VERSION 0.9.0</span>
+  </header>
 
-<section class="intro">
-  <div class="intro-copy">
-    <span class="kicker">NOTION MATERIALS</span>
-    <h2>從影片連結到正式教材</h2>
-    <p>先輸入發布日期與影片連結，產生 Gemini 教材提示詞；取得教材後，再產生 GPT 檢查與 Notion 整理提示詞。</p>
-  </div>
-  <a class="notion-link" href="https://app.notion.com/p/418c88fc35de81dba77bc654cab4ce3e" target="_blank" rel="noopener">開啟 Notion 資料庫 ↗</a>
-</section>
-
-<section class="auth panel">
-  <div class="auth-copy">
-    <h2>連線至教材資料庫</h2>
-    <p>輸入網站管理密碼，讀取 Notion 裡的教材。提示詞產生器不會修改現有資料。</p>
-  </div>
-  <div class="auth-controls">
-    <input id="appPassword" type="password" autocomplete="current-password" placeholder="網站管理密碼">
-    <button id="connect" class="primary">載入教材</button>
-  </div>
-  <p id="status" class="status">尚未連線</p>
-</section>
-
-<section id="libraryArea" class="hidden">
-  <section class="panel prompt-studio">
-    <div class="studio-heading">
-      <div><span class="kicker">MATERIAL WORKFLOW</span><h2>教材提示詞產生器</h2><p>依序完成 Gemini 教材製作，再交給 GPT 檢查與整理。</p></div>
-      <span class="version-chip">兩階段流程</span>
+  <section class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">YOUR MATERIALS, ONE PLACE</p>
+      <h1>公開檔案庫</h1>
+      <p>集中整理 PDF、Markdown、圖片與各種教材檔案。搜尋、預覽，或直接下載。</p>
     </div>
-    <div class="prompt-input-grid">
-      <div><label for="releaseDate">影片發布日期（手動輸入）</label><input id="releaseDate" type="date" required></div>
-      <div class="wide-field"><label for="videoUrl">YouTube 影片連結</label><input id="videoUrl" type="url" placeholder="https://youtu.be/..." required></div>
-      <div><label for="videoChannel">頻道名稱（選填）</label><input id="videoChannel" type="text" placeholder="例如 VibeEnglish"></div>
-      <div><label for="videoCategory">教材分類</label><select id="videoCategory"><option>美式英文 高級</option><option>美式英文 中級</option><option>英檢中高級</option><option>英式英文</option><option>其他</option></select></div>
-    </div>
-    <div class="workflow-step">
-      <div class="step-title"><span class="step-number">1</span><div><h3>Gemini｜製作教材</h3><p>產生逐句中英對照、文章內穿插重點解析的教材指令。</p></div></div>
-      <div class="button-row"><button id="makeGemini" class="primary">產生 Gemini 提示詞</button><button id="copyGemini" class="light" disabled>複製全部</button></div>
-      <textarea id="geminiPrompt" class="prompt-output" rows="10" placeholder="填入發布日期與影片連結後，按「產生 Gemini 提示詞」。" readonly></textarea>
-    </div>
-    <div class="workflow-step">
-      <div class="step-title"><span class="step-number">2</span><div><h3>GPT｜檢查教材與整理 Notion</h3><p>貼上 Gemini 的完整結果，產生第二組檢查及匯入指令。</p></div></div>
-      <label for="geminiResult">Gemini 產生的完整教材</label>
-      <textarea id="geminiResult" rows="8" placeholder="將 Gemini 的教材結果完整貼在這裡……"></textarea>
-      <div class="button-row"><button id="makeGpt" class="primary">產生 GPT 檢查／匯入提示詞</button><button id="copyGpt" class="light" disabled>複製全部</button></div>
-      <textarea id="gptPrompt" class="prompt-output" rows="10" placeholder="產生後，複製整份提示詞交給 GPT。" readonly></textarea>
-    </div>
-    <p class="workflow-note">版權提醒：只有在你擁有逐字稿、取得授權或素材屬公眾領域時，才要求完整逐字稿及完整翻譯。其他影片請使用逐句英文摘要／改述與中文對照，不重製整部受版權保護的內容。網站目前負責產生提示詞；Notion 寫入仍須由 GPT 在確認資料後執行。</p>
+    <div class="hero-art" aria-hidden="true"><div class="file-icon pdf">PDF</div><div class="file-icon md">MD</div><div class="file-icon img">IMG</div></div>
   </section>
 
-  <section class="stats" id="stats"></section>
-  <section class="panel filters">
-    <div class="filter-head">
-      <div><span class="kicker">FIND MATERIALS</span><h2>搜尋與篩選</h2></div>
-      <button id="refresh" class="light">重新整理</button>
-    </div>
-    <div class="filter-grid">
-      <div class="search-wrap"><label for="search">搜尋教材名稱或內容</label><input id="search" type="search" placeholder="輸入關鍵字"></div>
-      <div><label for="channelFilter">頻道</label><select id="channelFilter"><option value="">全部頻道</option></select></div>
-      <div><label for="categoryFilter">分類</label><select id="categoryFilter"><option value="">全部分類</option></select></div>
-      <div><label for="statusFilter">學習狀態</label><select id="statusFilter"><option value="">全部狀態</option><option>待學習</option><option>進行中</option><option>完成</option></select></div>
-      <div><label for="contentFilter">內容狀態</label><select id="contentFilter"><option value="">全部內容狀態</option><option>有內容</option><option>部分內容</option><option>沒內容</option></select></div>
-    </div>
-    <p id="resultCount" class="result-count"></p>
+  <section class="toolbar" aria-label="檔案搜尋與篩選">
+    <label class="searchbox"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="搜尋檔名、說明或標籤…" autocomplete="off"></label>
+    <select id="categoryFilter" aria-label="依分類篩選"><option value="">全部分類</option></select>
+    <select id="typeFilter" aria-label="依檔案類型篩選"><option value="">全部格式</option></select>
   </section>
-  <section class="materials">
-    <div class="materials-heading"><h2>教材清單</h2><span id="sortLabel">依學習日期排序</span></div>
-    <div id="library" class="library"><p class="empty">正在讀取教材……</p></div>
-  </section>
-</section>
 
-<footer>資料來源：Notion「英文教材紀錄」｜提示詞產生器不會自動匯入資料；請先由 GPT 檢查，再確認寫入 Notion。</footer>
+  <section class="summary-row">
+    <div><h2>所有檔案</h2><p id="resultSummary">正在載入檔案清單…</p></div>
+    <a class="manage-link" href="https://github.com/yuanting0117a/mason-learning-hub/tree/main/files" target="_blank" rel="noopener">管理檔案 ↗</a>
+  </section>
+
+  <section id="fileGrid" class="file-grid" aria-live="polite">
+    <div class="loading-card">正在載入公開檔案清單…</div>
+  </section>
+
+  <section class="upload-guide">
+    <div class="guide-icon">＋</div>
+    <div class="guide-copy"><h2>新增檔案</h2><p>目前採用 GitHub 儲存，不需要額外付費服務。管理者將檔案上傳至 Repository 的 <code>files/</code> 資料夾，再更新 <code>file-index.json</code>，網站就會自動列出新檔案。</p><a href="https://github.com/yuanting0117a/mason-learning-hub/tree/main/files" target="_blank" rel="noopener">前往 GitHub 上傳檔案 ↗</a></div>
+  </section>
+
+  <footer><span>檔案儲存於 GitHub Repository，透過 GitHub Pages 公開展示。</span><span>請勿上傳私人、機密或未取得公開授權的檔案。</span></footer>
 </main>
-<script src="app.js?v=0.8.2"></script>
+
+<dialog id="previewDialog" class="preview-dialog">
+  <div class="dialog-head"><div><span id="previewType" class="preview-type">FILE PREVIEW</span><h2 id="previewTitle">檔案預覽</h2></div><button id="closePreview" class="close-button" aria-label="關閉預覽">×</button></div>
+  <div id="previewBody" class="preview-body"></div>
+  <div class="dialog-foot"><a id="previewDownload" class="download-button" href="#" download>下載檔案 ↓</a></div>
+</dialog>
+
+<script src="app.js?v=0.9.0"></script>
 </body>
 </html>
