@@ -84,12 +84,12 @@ loadIndex();
 
 /* v0.9.1 direct upload through authenticated Cloudflare Worker */
 const API_BASE="https://mason-learning-api.yuanting0117a.workers.dev";
-let selectedUploads=[];
+let selectedUploads=[];\nlet githubReady=false;
 function setUploadStatus(message,type=""){const el=$("uploadStatus");el.textContent=message;el.className=type}
 function showSelectedFiles(){
  const el=$("selectedFiles");
  el.textContent=selectedUploads.length?selectedUploads.map(f=>f.name+" ("+prettySize(f.size)+")").join("、"):"尚未選擇檔案";
- $("uploadButton").disabled=!selectedUploads.length||!$("adminPassword").value.trim();
+ $("uploadButton").disabled=!selectedUploads.length||!$("adminPassword").value.trim()||!githubReady;
 }
 function chooseFiles(list){
  const incoming=Array.from(list||[]);
@@ -154,3 +154,32 @@ $("uploadButton").addEventListener("click",async()=>{
  else setUploadStatus("全部 "+completed+" 個檔案已上傳並加入檔案清單。","success");
 });
 showSelectedFiles();
+
+async function checkGithubConnection(){
+ const password=$("adminPassword").value.trim();
+ if(!password){githubReady=false;$("githubStatus").textContent="請先輸入網站管理密碼。";$("githubStatus").className="";showSelectedFiles();return}
+ try{
+  const response=await fetch(API_BASE+"/api/files/status",{headers:{"X-App-Password":password}});
+  const data=await response.json();
+  if(!response.ok)throw new Error(data.error||"無法檢查 GitHub 連線");
+  githubReady=!!data.configured;
+  $("githubStatus").textContent=githubReady?"GitHub 已連線，可以上傳檔案。":"尚未設定 GitHub Token。請建立 Fine-grained Token 並安全儲存。";
+  $("githubStatus").className=githubReady?"success":"";
+ }catch(error){githubReady=false;$("githubStatus").textContent=error.message;$("githubStatus").className="error"}
+ showSelectedFiles();
+}
+$("adminPassword").addEventListener("change",checkGithubConnection);
+$("adminPassword").addEventListener("blur",()=>{if($("adminPassword").value.trim()&&!githubReady)checkGithubConnection()});
+$("connectGithub").addEventListener("click",async()=>{
+ const password=$("adminPassword").value.trim(),token=$("githubToken").value.trim();
+ if(!password){$("githubStatus").textContent="請先輸入網站管理密碼。";$("githubStatus").className="error";return}
+ if(!token){$("githubStatus").textContent="請貼上 GitHub Token。";$("githubStatus").className="error";return}
+ const button=$("connectGithub");button.disabled=true;button.textContent="正在驗證…";
+ try{
+  const response=await fetch(API_BASE+"/api/files/connect",{method:"POST",headers:{"Content-Type":"application/json","X-App-Password":password},body:JSON.stringify({token})});
+  const data=await response.json();if(!response.ok)throw new Error(data.error||"Token 設定失敗");
+  $("githubToken").value="";githubReady=true;
+  $("githubStatus").textContent="GitHub 已連線，Token 已加密儲存。現在可以上傳檔案。";$("githubStatus").className="success";
+ }catch(error){githubReady=false;$("githubStatus").textContent=error.message;$("githubStatus").className="error"}
+ finally{button.disabled=false;button.textContent="安全儲存 Token";showSelectedFiles()}
+});
