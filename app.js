@@ -252,3 +252,4 @@ $("uploadButton").addEventListener("click",async()=>{
  else setUploadStatus("全部 "+completed+" 個檔案已直接上傳 GitHub，並更新公開檔案清單。","success");
 });
 showSelectedFiles();
+restoreGithubConnection();
