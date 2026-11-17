@@ -118,6 +118,7 @@ function chooseFiles(list){
  for(const f of incoming)byKey.set(f.name+":"+f.size+":"+f.lastModified,f);
  selectedUploads=Array.from(byKey.values());
  showSelectedFiles();
+restoreGithubConnection();
 }
 $("fileInput").addEventListener("change",e=>chooseFiles(e.target.files));
 const dropZone=$("dropZone");
@@ -135,26 +136,36 @@ async function githubRequest(url,options={}){
  if(!response.ok)throw new Error(data.message||"GitHub API 錯誤（HTTP "+response.status+"）");
  return data;
 }
-async function connectGithub(){
- const token=$("githubToken").value.trim();
+async function connectGithub(savedToken=null){
+ const token=(savedToken||$("githubToken").value).trim();
  if(!token){$("githubStatus").textContent="請貼上 GitHub Token。";$("githubStatus").className="error";return}
  const button=$("connectGithub");button.disabled=true;button.textContent="正在驗證…";
  githubToken=token;
  try{
   await githubRequest(GITHUB_API+"/repos/"+GITHUB_OWNER+"/"+GITHUB_REPO+"/contents/file-index.json");
   githubReady=true;
+  try{localStorage.setItem("masonGithubToken",token)}catch(storageError){}
   $("githubToken").value="";
-  $("githubStatus").textContent="GitHub 已連線。Token 僅保留在目前分頁記憶體中。";
+  $("githubStatus").textContent="GitHub 已連線。此瀏覽器已記住 Token，下次開啟網站會自動連線。";
   $("githubStatus").className="success";
  }catch(error){
   githubToken="";githubReady=false;
+  try{localStorage.removeItem("masonGithubToken")}catch(storageError){}
   $("githubStatus").textContent="連線失敗："+error.message+"。請確認 Token 有此 Repository 的 Contents 讀寫權限。";
   $("githubStatus").className="error";
  }finally{
   button.disabled=false;button.textContent="連線 GitHub";showSelectedFiles();
  }
 }
-$("connectGithub").addEventListener("click",connectGithub);
+$("connectGithub").addEventListener("click",()=>connectGithub());
+async function restoreGithubConnection(){
+ let savedToken="";
+ try{savedToken=localStorage.getItem("masonGithubToken")||""}catch(error){}
+ if(!savedToken)return;
+ $("githubStatus").textContent="正在恢復上次的 GitHub 連線…";
+ $("githubStatus").className="";
+ await connectGithub(savedToken);
+}
 function safeGitHubFilename(name){
  return String(name||"file").normalize("NFC").replace(/[\/\\?%*:|"<>]/g,"_").replace(/^\.+/,"").trim()||"file";
 }
