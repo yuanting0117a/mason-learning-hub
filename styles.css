@@ -81,3 +81,10 @@ footer{display:flex;justify-content:space-between;gap:16px;margin-top:22px;font-
 .upload-progress-item strong{font-size:11px;overflow-wrap:anywhere;font-weight:650}.upload-progress-item small{font-size:10px;color:#8793a3}
 .upload-progress-item progress{grid-column:1/-1;width:100%;height:6px;accent-color:#426a9e}
 @media(max-width:600px){.upload-panel{padding:16px}.upload-fields{grid-template-columns:1fr}.upload-fields .full{grid-column:auto}.upload-heading{display:block}.admin-lock{display:inline-block;margin-top:9px}.upload-controls button{width:100%}}
+
+.github-connect{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,380px);gap:9px 18px;align-items:center;padding:14px;margin:0 0 14px;border:1px solid #e4eaf2;background:#fafbfd;border-radius:11px}
+.connect-copy strong{font-size:11px}.connect-copy p{font-size:10px;line-height:1.7;color:#7c899a;margin:4px 0}.connect-copy a{font-size:10px;color:#42628d;font-weight:800}
+.connect-controls{display:flex;gap:7px}.connect-controls input{height:38px;min-width:0;flex:1;border:1px solid #dfe5ed;border-radius:8px;padding:0 10px;font-size:11px}
+.connect-controls button{font-size:10px;padding:0 11px;background:#e7edf5;color:#3b587e}
+.github-connect>small{grid-column:1/-1;font-size:10px;color:#8793a3}.github-connect>small.success{color:#187044}.github-connect>small.error{color:#b5473b}
+@media(max-width:650px){.github-connect{grid-template-columns:1fr}.connect-controls{flex-direction:column}.connect-controls button{height:36px}.github-connect>small{grid-column:auto}}
