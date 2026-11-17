@@ -30,6 +30,11 @@
   <section class="upload-panel" aria-labelledby="uploadTitle">
     <div class="upload-heading"><div><p class="eyebrow">ADMIN UPLOAD</p><h2 id="uploadTitle">上傳檔案</h2><p>使用網站管理密碼，直接把檔案放進公開檔案庫。</p></div><span class="admin-lock">管理者功能</span></div>
     <div class="upload-auth"><label for="adminPassword">網站管理密碼</label><input id="adminPassword" type="password" autocomplete="current-password" placeholder="輸入原本的網站管理密碼"></div>
+    <div class="github-connect">
+      <div class="connect-copy"><strong>首次設定 GitHub 儲存權限</strong><p>建立一組只允許此 Repository 讀寫 Contents 的 Fine-grained Personal Access Token。Token 會由 Worker 使用網站管理密碼加密後存入 KV，不會寫進網頁程式碼。</p><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">前往 GitHub 建立 Token ↗</a></div>
+      <div class="connect-controls"><input id="githubToken" type="password" autocomplete="off" placeholder="貼上 GitHub Fine-grained Token"><button id="connectGithub" type="button">安全儲存 Token</button></div>
+      <small id="githubStatus" role="status">請先輸入網站管理密碼，再檢查 GitHub 連線。</small>
+    </div>
     <label class="drop-zone" id="dropZone" for="fileInput">
       <input id="fileInput" type="file" multiple>
       <span class="upload-symbol">↑</span><strong>拖曳檔案到這裡，或點擊選擇檔案</strong><small>可一次選取多個檔案；單一檔案上限 8 MB</small>
