@@ -81,3 +81,76 @@ $("searchInput").addEventListener("input",render);
 $("categoryFilter").addEventListener("change",render);
 $("typeFilter").addEventListener("change",render);
 loadIndex();
+
+/* v0.9.1 direct upload through authenticated Cloudflare Worker */
+const API_BASE="https://mason-learning-api.yuanting0117a.workers.dev";
+let selectedUploads=[];
+function setUploadStatus(message,type=""){const el=$("uploadStatus");el.textContent=message;el.className=type}
+function showSelectedFiles(){
+ const el=$("selectedFiles");
+ el.textContent=selectedUploads.length?selectedUploads.map(f=>f.name+" ("+prettySize(f.size)+")").join("、"):"尚未選擇檔案";
+ $("uploadButton").disabled=!selectedUploads.length||!$("adminPassword").value.trim();
+}
+function chooseFiles(list){
+ const incoming=Array.from(list||[]);
+ const seen=new Set(selectedUploads.map(f=>f.name+":"+f.size+":"+f.lastModified));
+ for(const f of incoming){const key=f.name+":"+f.size+":"+f.lastModified;if(!seen.has(key)){selectedUploads.push(f);seen.add(key)}}
+ showSelectedFiles();
+}
+$("fileInput").addEventListener("change",e=>chooseFiles(e.target.files));
+$("adminPassword").addEventListener("input",showSelectedFiles);
+const dropZone=$("dropZone");
+["dragenter","dragover"].forEach(name=>dropZone.addEventListener(name,e=>{e.preventDefault();dropZone.classList.add("dragover")}));
+["dragleave","drop"].forEach(name=>dropZone.addEventListener(name,e=>{e.preventDefault();dropZone.classList.remove("dragover")}));
+dropZone.addEventListener("drop",e=>chooseFiles(e.dataTransfer.files));
+function uploadOne(file,password,index,total){
+ return new Promise((resolve,reject)=>{
+  const row=document.createElement("div");row.className="upload-progress-item";
+  const name=document.createElement("strong");name.textContent=file.name;
+  const status=document.createElement("small");status.textContent="準備上傳";
+  const progress=document.createElement("progress");progress.max=100;progress.value=0;
+  row.append(name,status,progress);$("uploadProgressList").append(row);
+  const form=new FormData();form.append("file",file,file.name);
+  form.append("category",$("uploadCategory").value.trim());
+  form.append("tags",$("uploadTags").value.trim());
+  form.append("description",$("uploadDescription").value.trim());
+  const xhr=new XMLHttpRequest();xhr.open("POST",API_BASE+"/api/files/upload");
+  xhr.setRequestHeader("X-App-Password",password);
+  xhr.upload.onprogress=e=>{if(e.lengthComputable){const percent=Math.round(e.loaded/e.total*100);progress.value=percent;status.textContent=percent+"%"}};
+  xhr.onload=()=>{
+   let data={};try{data=JSON.parse(xhr.responseText)}catch{}
+   if(xhr.status>=200&&xhr.status<300&&data.uploaded){
+    progress.value=100;status.textContent="完成";
+    files.unshift(data.item);
+    populateFilter("categoryFilter",[...new Set(files.map(x=>x.category))],"全部分類");
+    populateFilter("typeFilter",[...new Set(files.map(extOf))],"全部格式");
+    render();resolve(data.item);
+   }else{status.textContent="失敗";reject(new Error(data.error||"上傳失敗（HTTP "+xhr.status+"）"))}
+  };
+  xhr.onerror=()=>{status.textContent="連線失敗";reject(new Error("無法連線到上傳服務。"))};
+  xhr.onabort=()=>{status.textContent="已取消";reject(new Error("上傳已取消。"))};
+  xhr.send(form);
+ });
+}
+$("uploadButton").addEventListener("click",async()=>{
+ const password=$("adminPassword").value.trim();
+ if(!password){setUploadStatus("請輸入網站管理密碼。","error");return}
+ if(!selectedUploads.length)return;
+ const batch=selectedUploads.slice();
+ $("uploadButton").disabled=true;$("fileInput").disabled=true;
+ $("uploadProgressList").replaceChildren();
+ let completed=0,failed=[];
+ setUploadStatus("準備上傳 "+batch.length+" 個檔案……");
+ for(let i=0;i<batch.length;i++){
+  const file=batch[i];
+  if(file.size>8*1024*1024){failed.push(file.name+"：超過 8 MB");continue}
+  try{await uploadOne(file,password,i+1,batch.length);completed++}
+  catch(error){failed.push(file.name+"："+error.message)}
+  setUploadStatus("已完成 "+completed+" / "+batch.length+(failed.length?"；失敗 "+failed.length+" 個":""));
+ }
+ selectedUploads=[];$("fileInput").value="";showSelectedFiles();
+ $("uploadButton").disabled=true;$("fileInput").disabled=false;
+ if(failed.length)setUploadStatus("完成 "+completed+" 個；失敗 "+failed.length+" 個："+failed.join("；"),"error");
+ else setUploadStatus("全部 "+completed+" 個檔案已上傳並加入檔案清單。","success");
+});
+showSelectedFiles();
