@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f4f6fa">
 <meta name="description" content="公開檔案庫：集中瀏覽、搜尋、預覽與下載教材及文件。">
 <title>公開檔案庫</title>
-<link rel="stylesheet" href="styles.css?v=1.1.0">
+<link rel="stylesheet" href="styles.css?v=1.2.0">
 </head>
 <body>
 <main class="shell">
@@ -15,52 +15,43 @@
       <span class="brand-mark">F</span>
       <span><strong>檔案庫</strong><small>PUBLIC FILE LIBRARY</small></span>
     </a>
-    <span class="version">VERSION 1.1.0</span>
+    <span class="version">VERSION 1.2.0</span>
   </header>
 
   <section class="hero">
     <div class="hero-copy">
       <p class="eyebrow">YOUR MATERIALS, ONE PLACE</p>
       <h1>公開檔案庫</h1>
-      <p>集中整理教材影片截圖、PDF 與課程資料。依課程、影片和章節搜尋，預覽原始畫面。</p>
+      <p>上傳圖片後自動編號，直接指定 IMG 編號就能請 AI 查看原始畫面。</p>
     </div>
     <div class="hero-art" aria-hidden="true"><div class="file-icon pdf">PDF</div><div class="file-icon md">MD</div><div class="file-icon img">IMG</div></div>
   </section>
 
   <section class="upload-panel" aria-labelledby="uploadTitle">
-    <div class="upload-heading"><div><p class="eyebrow">ADMIN UPLOAD</p><h2 id="uploadTitle">上傳檔案</h2><p>直接從瀏覽器上傳到 GitHub，讓 GPT 可以讀取公開素材。</p></div><span class="admin-lock">管理者功能</span></div>
+    <div class="upload-heading"><div><p class="eyebrow">ADMIN UPLOAD</p><h2 id="uploadTitle">上傳檔案</h2><p>直接上傳、批次管理、複製圖片連結，也能從這裡刪除檔案。</p></div><span class="admin-lock">管理者功能</span></div>
     
     <div class="github-connect">
-      <div class="connect-copy"><strong>GitHub 直接上傳</strong><p>建立只允許此 Repository 讀寫 Contents 的 Fine-grained Personal Access Token。連線成功後會將 Token 保存在這台裝置目前的瀏覽器中，下次開啟網站會自動連線。Token 不會傳到 Cloudflare，也不會寫入網站程式碼。請勿在共用電腦使用此功能。</p><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">前往 GitHub 建立 Token ↗</a></div>
+      <div class="connect-copy"><strong>GitHub 直接上傳</strong><p>建立只允許此 Repository 讀寫 Contents 的 Fine-grained Personal Access Token。連線成功後會將 Token 保存在這台裝置目前的瀏覽器中，下次開啟網站會自動連線。Token 不會傳到 Cloudflare，也不會寫入網站程式碼。Token 需有 Contents 讀寫權限，才能上傳及刪除。請勿在共用電腦使用此功能。</p><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">前往 GitHub 建立 Token ↗</a></div>
       <div class="connect-controls"><input id="githubToken" type="password" autocomplete="off" placeholder="貼上 GitHub Fine-grained Token"><button id="connectGithub" type="button">連線 GitHub</button></div>
       <small id="githubStatus" role="status">尚未連線 GitHub。</small>
     </div>
     <label class="drop-zone" id="dropZone" for="fileInput">
-      <input id="fileInput" type="file" multiple>
-      <span class="upload-symbol">↑</span><strong>拖曳檔案到這裡，或點擊選擇檔案</strong><small>可一次選取多個檔案；單一檔案上限 8 MB；直接上傳至 GitHub</small>
+      <input id="fileInput" type="file" multiple accept="image/*,.pdf,.txt,.md,.csv">
+      <span class="upload-symbol">↑</span><strong>拖曳檔案到這裡，或點擊選擇檔案</strong><small>可一次選取多個檔案；單一檔案上限 8 MB；圖片自動取得 IMG 編號</small>
       <span id="selectedFiles" class="selected-files">尚未選擇檔案</span>
     </label>
-    <div class="upload-fields">
-      <div><label for="uploadCategory">檔案分類</label><input id="uploadCategory" type="text" placeholder="例如：物理、計算機概論"></div>
-      <div><label for="uploadCourse">課程名稱（選填）</label><input id="uploadCourse" type="text" placeholder="例如：普通物理"></div>
-      <div><label for="uploadVideoTitle">教材影片名稱（選填）</label><input id="uploadVideoTitle" type="text" placeholder="例如：轉動慣量與平行軸定理"></div>
-      <div><label for="uploadChapter">章節（選填）</label><input id="uploadChapter" type="text" placeholder="例如：Chapter 7／第 3 段"></div>
-      <div><label for="uploadTags">標籤（以逗號分隔）</label><input id="uploadTags" type="text" placeholder="例如：轉動慣量, 公式, 例題"></div>
-      <div class="full"><label for="uploadDescription">畫面說明（選填）</label><input id="uploadDescription" type="text" maxlength="500" placeholder="例如：老師推導角加速度公式的畫面"></div>
-    </div>
     <div class="upload-controls"><button id="uploadButton" type="button" disabled>開始上傳</button><span id="uploadStatus" role="status">請先連線 GitHub 並選擇檔案。</span></div>
     <div id="uploadProgressList" class="upload-progress-list" aria-live="polite"></div>
   </section>
 
   <section class="toolbar" aria-label="檔案搜尋與篩選">
-    <label class="searchbox"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="搜尋檔名、說明或標籤…" autocomplete="off"></label>
-    <select id="categoryFilter" aria-label="依分類篩選"><option value="">全部分類</option></select>
+    <label class="searchbox"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="搜尋 IMG 編號或檔名…" autocomplete="off"></label>
     <select id="typeFilter" aria-label="依檔案類型篩選"><option value="">全部格式</option></select>
   </section>
 
   <section class="summary-row">
     <div><h2>所有檔案</h2><p id="resultSummary">正在載入檔案清單…</p></div>
-    <div class="summary-links"><a class="manage-link" href="gpt-index.md" target="_blank" rel="noopener">GPT 讀取索引 ↗</a><a class="manage-link" href="https://github.com/yuanting0117a/mason-learning-hub/tree/main/files" target="_blank" rel="noopener">管理檔案 ↗</a></div>
+    <div class="summary-links"><a class="manage-link" href="gpt-index.md" target="_blank" rel="noopener">GPT 讀取索引 ↗</a></div>
   </section>
 
   <section id="fileGrid" class="file-grid" aria-live="polite">
@@ -69,7 +60,7 @@
 
   <section class="upload-guide">
     <div class="guide-icon">＋</div>
-    <div class="guide-copy"><h2>新增檔案</h2><p>檔案由瀏覽器直接上傳至 GitHub Repository 的 <code>files/</code> 資料夾，並自動更新 <code>file-index.json</code>。不經過 Cloudflare Worker。</p><a href="https://github.com/yuanting0117a/mason-learning-hub/tree/main/files" target="_blank" rel="noopener">前往 GitHub 上傳檔案 ↗</a></div>
+    <div class="guide-copy"><h2>AI 使用方式</h2><p>開啟「GPT 讀取索引」，找到圖片編號後告訴 AI，例如：「請查看 Mason 的 IMG-001」。需要精確辨識細節時，仍可直接把原圖上傳到對話。</p></div>
   </section>
 
   <footer><span>檔案儲存於 GitHub Repository，透過 GitHub Pages 公開展示。</span><span>請勿上傳私人、機密或未取得公開授權的檔案。</span></footer>
@@ -81,6 +72,6 @@
   <div class="dialog-foot"><a id="previewDownload" class="download-button" href="#" download>下載檔案 ↓</a></div>
 </dialog>
 
-<script src="app.js?v=1.1.0"></script>
+<script src="app.js?v=1.2.0"></script>
 </body>
 </html>
