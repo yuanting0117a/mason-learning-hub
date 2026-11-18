@@ -88,3 +88,7 @@ footer{display:flex;justify-content:space-between;gap:16px;margin-top:22px;font-
 .connect-controls button{font-size:10px;padding:0 11px;background:#e7edf5;color:#3b587e}
 .github-connect>small{grid-column:1/-1;font-size:10px;color:#8793a3}.github-connect>small.success{color:#187044}.github-connect>small.error{color:#b5473b}
 @media(max-width:650px){.github-connect{grid-template-columns:1fr}.connect-controls{flex-direction:column}.connect-controls button{height:36px}.github-connect>small{grid-column:auto}}
+
+/* v1.1.0 video screenshot metadata */
+.file-tags span{max-width:100%;overflow-wrap:anywhere}
+.upload-fields input:focus{border-color:#8da5c5;box-shadow:0 0 0 3px #dce7f5}
