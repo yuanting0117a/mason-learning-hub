@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f4f6fa">
 <meta name="description" content="公開檔案庫：集中瀏覽、搜尋、預覽與下載教材及文件。">
 <title>公開檔案庫</title>
-<link rel="stylesheet" href="styles.css?v=1.0.2">
+<link rel="stylesheet" href="styles.css?v=1.1.0">
 </head>
 <body>
 <main class="shell">
@@ -15,14 +15,14 @@
       <span class="brand-mark">F</span>
       <span><strong>檔案庫</strong><small>PUBLIC FILE LIBRARY</small></span>
     </a>
-    <span class="version">VERSION 1.0.2</span>
+    <span class="version">VERSION 1.1.0</span>
   </header>
 
   <section class="hero">
     <div class="hero-copy">
       <p class="eyebrow">YOUR MATERIALS, ONE PLACE</p>
       <h1>公開檔案庫</h1>
-      <p>集中整理 PDF、Markdown、圖片與各種教材檔案。搜尋、預覽，或直接下載。</p>
+      <p>集中整理教材影片截圖、PDF 與課程資料。依課程、影片和章節搜尋，預覽原始畫面。</p>
     </div>
     <div class="hero-art" aria-hidden="true"><div class="file-icon pdf">PDF</div><div class="file-icon md">MD</div><div class="file-icon img">IMG</div></div>
   </section>
@@ -41,9 +41,12 @@
       <span id="selectedFiles" class="selected-files">尚未選擇檔案</span>
     </label>
     <div class="upload-fields">
-      <div><label for="uploadCategory">檔案分類</label><input id="uploadCategory" type="text" placeholder="例如：英文教材、課堂筆記"></div>
-      <div><label for="uploadTags">標籤（以逗號分隔）</label><input id="uploadTags" type="text" placeholder="例如：英檢, 閱讀, 文法"></div>
-      <div class="full"><label for="uploadDescription">檔案說明（選填）</label><input id="uploadDescription" type="text" maxlength="500" placeholder="簡短說明這份檔案的內容"></div>
+      <div><label for="uploadCategory">檔案分類</label><input id="uploadCategory" type="text" placeholder="例如：物理、計算機概論"></div>
+      <div><label for="uploadCourse">課程名稱（選填）</label><input id="uploadCourse" type="text" placeholder="例如：普通物理"></div>
+      <div><label for="uploadVideoTitle">教材影片名稱（選填）</label><input id="uploadVideoTitle" type="text" placeholder="例如：轉動慣量與平行軸定理"></div>
+      <div><label for="uploadChapter">章節（選填）</label><input id="uploadChapter" type="text" placeholder="例如：Chapter 7／第 3 段"></div>
+      <div><label for="uploadTags">標籤（以逗號分隔）</label><input id="uploadTags" type="text" placeholder="例如：轉動慣量, 公式, 例題"></div>
+      <div class="full"><label for="uploadDescription">畫面說明（選填）</label><input id="uploadDescription" type="text" maxlength="500" placeholder="例如：老師推導角加速度公式的畫面"></div>
     </div>
     <div class="upload-controls"><button id="uploadButton" type="button" disabled>開始上傳</button><span id="uploadStatus" role="status">請先連線 GitHub 並選擇檔案。</span></div>
     <div id="uploadProgressList" class="upload-progress-list" aria-live="polite"></div>
@@ -78,6 +81,6 @@
   <div class="dialog-foot"><a id="previewDownload" class="download-button" href="#" download>下載檔案 ↓</a></div>
 </dialog>
 
-<script src="app.js?v=1.0.2"></script>
+<script src="app.js?v=1.1.0"></script>
 </body>
 </html>
