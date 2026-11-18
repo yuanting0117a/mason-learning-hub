@@ -27,11 +27,10 @@ function render(){
   const size=prettySize(f.size);
   return '<article class="file-card">'+
    '<div class="card-head"><span class="file-type '+escapeHtml(ext)+'">'+escapeHtml(label)+'</span><span class="file-size">'+escapeHtml(size)+'</span></div>'+
+   (f.imageId?'<div class="file-id">'+escapeHtml(f.imageId)+'</div>':'')+
    '<h3>'+escapeHtml(f.name||"未命名檔案")+'</h3>'+
-   '<p class="file-description">'+escapeHtml(f.description||"尚未提供檔案說明。")+'</p>'+
-   '<div class="file-tags">'+(f.category?'<span>'+escapeHtml(f.category)+'</span>':"")+(f.course?'<span>'+escapeHtml(f.course)+'</span>':"")+(f.videoTitle?'<span>'+escapeHtml(f.videoTitle)+'</span>':"")+(f.chapter?'<span>'+escapeHtml(f.chapter)+'</span>':"")+tags+'</div>'+
-   '<div class="file-meta"><span>'+escapeHtml(prettyDate(f.updated))+'</span><span>'+escapeHtml(f.category||"未分類")+'</span></div>'+
-   '<div class="card-actions">'+(url&&(["pdf",...IMAGE_TYPES,...TEXT_TYPES].includes(ext))?'<button type="button" data-preview="'+escapeHtml(f.id)+'">預覽</button>':'')+(url?'<button type="button" data-share="'+escapeHtml(f.id)+'">複製連結</button><a class="download" href="'+escapeHtml(url)+'" download>下載</a>':'<span>檔案路徑無效</span>')+'<button type="button" class="delete-button" data-delete="'+escapeHtml(f.id)+'" '+(!githubReady?'disabled title="請先連線 GitHub"':"")+' >刪除</button>'+'</div>'+
+   '<div class="file-meta"><span>'+escapeHtml(prettyDate(f.updated))+'</span><span>'+escapeHtml(size)+'</span></div>'+
+   '<div class="card-actions">'+(url&&(["pdf",...IMAGE_TYPES,...TEXT_TYPES].includes(ext))?'<button type="button" data-preview="'+escapeHtml(f.id)+'">預覽</button>':'')+(url?'<button type="button" data-share="'+escapeHtml(f.id)+'">複製連結</button><a class="download" href="'+escapeHtml(url)+'" download>下載</a>':'<span>檔案路徑無效</span>')+'<button type="button" class="delete-button" data-delete="'+escapeHtml(f.id)+'" '+(!githubReady?'disabled title="請先連線 GitHub"':"")+'>刪除</button></div>'+
    '</article>';
  }).join(""):'<div class="empty-state"><strong>找不到符合條件的檔案</strong>請調整搜尋文字或篩選條件。</div>';
 }
