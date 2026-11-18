@@ -190,9 +190,11 @@ async function getManifest(){
  return {sha:data.sha,manifest:JSON.parse(decoded)};
 }
 
-function nextImageId(items){
- const max=(items||[]).reduce((n,item)=>{const m=String(item.imageId||"").match(/^IMG-(\d+)$/);return m?Math.max(n,Number(m[1])):n},0);
- return "IMG-"+String(max+1).padStart(3,"0");
+function nextImageId(manifest){
+ const max=(manifest.files||[]).reduce((n,item)=>{const m=String(item.imageId||"").match(/^IMG-(\\d+)$/);return m?Math.max(n,Number(m[1])):n},0);
+ const next=Math.max(Number(manifest.nextImageNumber)||1,max+1);
+ manifest.nextImageNumber=next+1;
+ return "IMG-"+String(next).padStart(3,"0");
 }
 async function deleteFile(id,button){
  if(!githubReady||!githubToken){setUploadStatus("請先連線 GitHub 才能刪除。","error");return}
@@ -237,7 +239,7 @@ async function uploadOne(file,index,total){
    path,
    size:file.size,
    type:ext,
-   ...(IMAGE_TYPES.has(ext)?{imageId:nextImageId(manifest.files)}:{}),
+   ...(IMAGE_TYPES.has(ext)?{imageId:nextImageId(manifest)}:{}),
    updated:new Date().toISOString().slice(0,10)
   };
   manifest.files.unshift(item);
