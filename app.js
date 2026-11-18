@@ -151,7 +151,7 @@ async function connectGithub(savedToken=null){
   $("githubStatus").textContent="連線失敗："+error.message+"。請確認 Token 有此 Repository 的 Contents 讀寫權限。";
   $("githubStatus").className="error";
  }finally{
-  button.disabled=false;button.textContent="連線 GitHub";showSelectedFiles();
+  button.disabled=false;button.textContent="連線 GitHub";showSelectedFiles();render();
  }
 }
 $("connectGithub").addEventListener("click",()=>connectGithub());
