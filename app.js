@@ -30,7 +30,7 @@ function render(){
    '<div class="card-head"><span class="file-type '+escapeHtml(ext)+'">'+escapeHtml(label)+'</span><span class="file-size">'+escapeHtml(size)+'</span></div>'+
    '<h3>'+escapeHtml(f.name||"未命名檔案")+'</h3>'+
    '<p class="file-description">'+escapeHtml(f.description||"尚未提供檔案說明。")+'</p>'+
-   '<div class="file-tags">'+(f.category?'<span>'+escapeHtml(f.category)+'</span>':"")+(f.course?'<span>'+escapeHtml(f.course)+'</span>':"")+(f.chapter?'<span>'+escapeHtml(f.chapter)+'</span>':"")+tags+'</div>'+
+   '<div class="file-tags">'+(f.category?'<span>'+escapeHtml(f.category)+'</span>':"")+(f.course?'<span>'+escapeHtml(f.course)+'</span>':"")+(f.videoTitle?'<span>'+escapeHtml(f.videoTitle)+'</span>':"")+(f.chapter?'<span>'+escapeHtml(f.chapter)+'</span>':"")+tags+'</div>'+
    '<div class="file-meta"><span>'+escapeHtml(prettyDate(f.updated))+'</span><span>'+escapeHtml(f.category||"未分類")+'</span></div>'+
    '<div class="card-actions">'+(url&&(["pdf",...IMAGE_TYPES,...TEXT_TYPES].includes(ext))?'<button type="button" data-preview="'+escapeHtml(f.id)+'">預覽</button>':'')+(url?'<button type="button" data-share="'+escapeHtml(f.id)+'">分享連結</button><a class="download" href="'+escapeHtml(url)+'" download>下載檔案 ↓</a>':'<span>檔案路徑無效</span>')+'</div>'+
    '</article>';
