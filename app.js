@@ -16,15 +16,14 @@ function prettyDate(value){if(!value)return "日期未提供";const d=new Date(v
 function prettySize(size){if(!Number.isFinite(Number(size))||Number(size)<0)return "";const n=Number(size);return n<1024? n+" B":n<1048576?(n/1024).toFixed(1)+" KB":(n/1048576).toFixed(1)+" MB"}
 function populateFilter(id,values,label){const el=$(id);el.innerHTML='<option value="">'+label+'</option>'+values.filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b),"zh-TW")).map(v=>'<option value="'+escapeHtml(v)+'">'+escapeHtml(v)+'</option>').join("")}
 function render(){
- const q=$("searchInput").value.trim().toLocaleLowerCase(),category=$("categoryFilter").value,type=$("typeFilter").value;
+ const q=$("searchInput").value.trim().toLocaleLowerCase(),type=$("typeFilter").value;
  const filtered=files.filter(f=>{
-  const hay=[f.name,f.description,f.category,f.course,f.videoTitle,f.chapter,...(f.tags||[]),extOf(f)].join(" ").toLocaleLowerCase();
-  return (!q||hay.includes(q))&&(!category||f.category===category)&&(!type||extOf(f)===type);
+  const hay=[f.imageId,f.name,f.description,extOf(f)].join(" ").toLocaleLowerCase();
+  return (!q||hay.includes(q))&&(!type||extOf(f)===type);
  });
  $("resultSummary").textContent="顯示 "+filtered.length+" / "+files.length+" 個檔案";
  $("fileGrid").innerHTML=filtered.length?filtered.map(f=>{
   const url=fileUrl(f),ext=extOf(f),label=TYPE_LABEL[ext]||ext.toUpperCase().slice(0,5)||"FILE";
-  const tags=(f.tags||[]).slice(0,5).map(t=>"<span>"+escapeHtml(t)+"</span>").join("");
   const size=prettySize(f.size);
   return '<article class="file-card">'+
    '<div class="card-head"><span class="file-type '+escapeHtml(ext)+'">'+escapeHtml(label)+'</span><span class="file-size">'+escapeHtml(size)+'</span></div>'+
@@ -32,7 +31,7 @@ function render(){
    '<p class="file-description">'+escapeHtml(f.description||"尚未提供檔案說明。")+'</p>'+
    '<div class="file-tags">'+(f.category?'<span>'+escapeHtml(f.category)+'</span>':"")+(f.course?'<span>'+escapeHtml(f.course)+'</span>':"")+(f.videoTitle?'<span>'+escapeHtml(f.videoTitle)+'</span>':"")+(f.chapter?'<span>'+escapeHtml(f.chapter)+'</span>':"")+tags+'</div>'+
    '<div class="file-meta"><span>'+escapeHtml(prettyDate(f.updated))+'</span><span>'+escapeHtml(f.category||"未分類")+'</span></div>'+
-   '<div class="card-actions">'+(url&&(["pdf",...IMAGE_TYPES,...TEXT_TYPES].includes(ext))?'<button type="button" data-preview="'+escapeHtml(f.id)+'">預覽</button>':'')+(url?'<button type="button" data-share="'+escapeHtml(f.id)+'">分享連結</button><a class="download" href="'+escapeHtml(url)+'" download>下載檔案 ↓</a>':'<span>檔案路徑無效</span>')+'</div>'+
+   '<div class="card-actions">'+(url&&(["pdf",...IMAGE_TYPES,...TEXT_TYPES].includes(ext))?'<button type="button" data-preview="'+escapeHtml(f.id)+'">預覽</button>':'')+(url?'<button type="button" data-share="'+escapeHtml(f.id)+'">複製連結</button><a class="download" href="'+escapeHtml(url)+'" download>下載</a>':'<span>檔案路徑無效</span>')+'<button type="button" class="delete-button" data-delete="'+escapeHtml(f.id)+'" '+(!githubReady?'disabled title="請先連線 GitHub"':"")+' >刪除</button>'+'</div>'+
    '</article>';
  }).join(""):'<div class="empty-state"><strong>找不到符合條件的檔案</strong>請調整搜尋文字或篩選條件。</div>';
 }
@@ -43,7 +42,6 @@ async function loadIndex(){
   const data=await response.json();
   if(!Array.isArray(data.files))throw new Error("file-index.json 格式錯誤：files 必須是陣列。");
   files=data.files.filter(f=>f&&typeof f==="object"&&safePath(f.path));
-  populateFilter("categoryFilter",[...new Set(files.map(f=>f.category))],"全部分類");
   populateFilter("typeFilter",[...new Set(files.map(extOf))],"全部格式");
   render();
  }catch(error){
@@ -88,16 +86,16 @@ async function shareFile(id,button){
 $("fileGrid").addEventListener("click",event=>{
  const shareButton=event.target.closest("[data-share]");
  if(shareButton){shareFile(shareButton.dataset.share,shareButton);return}
+ const deleteButton=event.target.closest("[data-delete]");if(deleteButton){deleteFile(deleteButton.dataset.delete,deleteButton);return}
  const button=event.target.closest("[data-preview]");if(button)showPreview(button.dataset.preview);
 });
 $("closePreview").addEventListener("click",()=>$("previewDialog").close());
 $("previewDialog").addEventListener("click",event=>{if(event.target===$("previewDialog"))$("previewDialog").close()});
 $("searchInput").addEventListener("input",render);
-$("categoryFilter").addEventListener("change",render);
 $("typeFilter").addEventListener("change",render);
 loadIndex();
 
-/* v1.0.0 direct browser-to-GitHub uploads; no Cloudflare upload proxy */
+/* v1.2.0 direct browser-to-GitHub uploads and deletes; no Cloudflare proxy */
 const GITHUB_OWNER="yuanting0117a";
 const GITHUB_REPO="mason-learning-hub";
 const GITHUB_BRANCH="main";
@@ -192,6 +190,29 @@ async function getManifest(){
  const decoded=new TextDecoder().decode(bytes);
  return {sha:data.sha,manifest:JSON.parse(decoded)};
 }
+
+function nextImageId(items){
+ const max=(items||[]).reduce((n,item)=>{const m=String(item.imageId||"").match(/^IMG-(\d+)$/);return m?Math.max(n,Number(m[1])):n},0);
+ return "IMG-"+String(max+1).padStart(3,"0");
+}
+async function deleteFile(id,button){
+ if(!githubReady||!githubToken){setUploadStatus("請先連線 GitHub 才能刪除。","error");return}
+ const file=files.find(f=>String(f.id)===String(id));if(!file)return;
+ const label=file.imageId?file.imageId+" — "+file.name:file.name;
+ if(!window.confirm("確定永久刪除「"+label+"」？\n這會同時刪除原始檔案與網站索引，無法從網站復原。"))return;
+ button.disabled=true;button.textContent="刪除中…";
+ try{
+  const encoded=file.path.split("/").map(encodeURIComponent).join("/");
+  const current=await githubRequest(GITHUB_API+"/repos/"+GITHUB_OWNER+"/"+GITHUB_REPO+"/contents/"+encoded+"?ref="+GITHUB_BRANCH);
+  await githubRequest(GITHUB_API+"/repos/"+GITHUB_OWNER+"/"+GITHUB_REPO+"/contents/"+encoded,{method:"DELETE",body:JSON.stringify({message:"Delete file: "+file.name,sha:current.sha,branch:GITHUB_BRANCH})});
+  const {sha,manifest}=await getManifest();
+  manifest.files=(manifest.files||[]).filter(item=>item.id!==file.id&&item.path!==file.path);
+  await putGitHubFile("file-index.json",btoa(unescape(encodeURIComponent(JSON.stringify(manifest,null,2)+"\n"))),"Remove deleted file from index: "+file.name,sha);
+  files=files.filter(item=>item.id!==file.id);render();
+  setUploadStatus("已刪除 "+label+"（原始檔案與索引均已更新）。","success");
+ }catch(error){button.disabled=false;button.textContent="刪除";setUploadStatus("刪除未完整完成："+error.message+"。請重新整理清單確認狀態。","error")}
+}
+
 async function uploadOne(file,index,total){
  const row=document.createElement("div");row.className="upload-progress-item";
  const name=document.createElement("strong");name.textContent=file.name;
@@ -217,12 +238,7 @@ async function uploadOne(file,index,total){
    path,
    size:file.size,
    type:ext,
-   category:$("uploadCategory").value.trim()||"未分類",
-   tags:$("uploadTags").value.split(/[,，]/).map(x=>x.trim()).filter(Boolean),
-   description:$("uploadDescription").value.trim(),
-   course:$("uploadCourse").value.trim(),
-   videoTitle:$("uploadVideoTitle").value.trim(),
-   chapter:$("uploadChapter").value.trim(),
+   ...(IMAGE_TYPES.has(ext)?{imageId:nextImageId(manifest.files)}:{}),
    updated:new Date().toISOString().slice(0,10)
   };
   manifest.files.unshift(item);
@@ -243,7 +259,6 @@ $("uploadButton").addEventListener("click",async()=>{
   try{
    const item=await uploadOne(batch[i],i+1,batch.length);
    files.unshift(item);completed++;
-   populateFilter("categoryFilter",[...new Set(files.map(x=>x.category))],"全部分類");
    populateFilter("typeFilter",[...new Set(files.map(extOf))],"全部格式");
    render();
   }catch(error){failed.push(batch[i].name+"："+error.message)}
