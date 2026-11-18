@@ -18,7 +18,7 @@ function populateFilter(id,values,label){const el=$(id);el.innerHTML='<option va
 function render(){
  const q=$("searchInput").value.trim().toLocaleLowerCase(),category=$("categoryFilter").value,type=$("typeFilter").value;
  const filtered=files.filter(f=>{
-  const hay=[f.name,f.description,f.category,...(f.tags||[]),extOf(f)].join(" ").toLocaleLowerCase();
+  const hay=[f.name,f.description,f.category,f.course,f.videoTitle,f.chapter,...(f.tags||[]),extOf(f)].join(" ").toLocaleLowerCase();
   return (!q||hay.includes(q))&&(!category||f.category===category)&&(!type||extOf(f)===type);
  });
  $("resultSummary").textContent="顯示 "+filtered.length+" / "+files.length+" 個檔案";
@@ -30,7 +30,7 @@ function render(){
    '<div class="card-head"><span class="file-type '+escapeHtml(ext)+'">'+escapeHtml(label)+'</span><span class="file-size">'+escapeHtml(size)+'</span></div>'+
    '<h3>'+escapeHtml(f.name||"未命名檔案")+'</h3>'+
    '<p class="file-description">'+escapeHtml(f.description||"尚未提供檔案說明。")+'</p>'+
-   '<div class="file-tags">'+(f.category?'<span>'+escapeHtml(f.category)+'</span>':"")+tags+'</div>'+
+   '<div class="file-tags">'+(f.category?'<span>'+escapeHtml(f.category)+'</span>':"")+(f.course?'<span>'+escapeHtml(f.course)+'</span>':"")+(f.chapter?'<span>'+escapeHtml(f.chapter)+'</span>':"")+tags+'</div>'+
    '<div class="file-meta"><span>'+escapeHtml(prettyDate(f.updated))+'</span><span>'+escapeHtml(f.category||"未分類")+'</span></div>'+
    '<div class="card-actions">'+(url&&(["pdf",...IMAGE_TYPES,...TEXT_TYPES].includes(ext))?'<button type="button" data-preview="'+escapeHtml(f.id)+'">預覽</button>':'')+(url?'<button type="button" data-share="'+escapeHtml(f.id)+'">分享連結</button><a class="download" href="'+escapeHtml(url)+'" download>下載檔案 ↓</a>':'<span>檔案路徑無效</span>')+'</div>'+
    '</article>';
@@ -220,6 +220,9 @@ async function uploadOne(file,index,total){
    category:$("uploadCategory").value.trim()||"未分類",
    tags:$("uploadTags").value.split(/[,，]/).map(x=>x.trim()).filter(Boolean),
    description:$("uploadDescription").value.trim(),
+   course:$("uploadCourse").value.trim(),
+   videoTitle:$("uploadVideoTitle").value.trim(),
+   chapter:$("uploadChapter").value.trim(),
    updated:new Date().toISOString().slice(0,10)
   };
   manifest.files.unshift(item);
