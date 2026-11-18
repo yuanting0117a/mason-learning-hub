@@ -94,3 +94,5 @@ footer{display:flex;justify-content:space-between;gap:16px;margin-top:22px;font-
 .upload-fields input:focus{border-color:#8da5c5;box-shadow:0 0 0 3px #dce7f5}
 
 .summary-links{display:flex;align-items:center;gap:16px;flex-wrap:wrap}.summary-links .manage-link:first-child{color:#315f91}
+
+.file-id{display:inline-flex;margin-top:12px;padding:5px 9px;border-radius:7px;background:#edf3fb;color:#345b89;font-size:12px;font-weight:850;letter-spacing:.04em}.card-actions .delete-button{color:#a43f3f;border-color:#efdada;background:#fff8f7}.card-actions button:disabled{opacity:.45;cursor:not-allowed}
