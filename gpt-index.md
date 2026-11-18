@@ -5,12 +5,7 @@
 
 ## 實驗七 耦合振盪 (1).pdf
 
-- Category: 普務實
-- Course: 未提供
-- Video: 未提供
-- Chapter: 未提供
-- Tags: 無
-- Description: 無
+- Image ID: N/A
 - Original file: https://yuanting0117a.github.io/mason-learning-hub/files/1794923949963-1-%E5%AF%A6%E9%A9%97%E4%B8%83%20%E8%80%A6%E5%90%88%E6%8C%AF%E7%9B%AA%20%281%29.pdf
 - Raw source: https://raw.githubusercontent.com/yuanting0117a/mason-learning-hub/main/files/1794923949963-1-%E5%AF%A6%E9%A9%97%E4%B8%83%20%E8%80%A6%E5%90%88%E6%8C%AF%E7%9B%AA%20%281%29.pdf
 
@@ -273,14 +268,9 @@ m(g)
 
 ---
 
-## 螢幕擷取畫面 2026-11-15 215459.png
+## IMG-001 — 螢幕擷取畫面 2026-11-15 215459.png
 
-- Category: 照片
-- Course: 未提供
-- Video: 未提供
-- Chapter: 未提供
-- Tags: 1
-- Description: 無
+- Image ID: IMG-001
 - Original file: https://yuanting0117a.github.io/mason-learning-hub/files/1794922819168-1-%E8%9E%A2%E5%B9%95%E6%93%B7%E5%8F%96%E7%95%AB%E9%9D%A2%202026-11-15%20215459.png
 - Raw source: https://raw.githubusercontent.com/yuanting0117a/mason-learning-hub/main/files/1794922819168-1-%E8%9E%A2%E5%B9%95%E6%93%B7%E5%8F%96%E7%95%AB%E9%9D%A2%202026-11-15%20215459.png
 ![螢幕擷取畫面 2026-11-15 215459.png](https://raw.githubusercontent.com/yuanting0117a/mason-learning-hub/main/files/1794922819168-1-%E8%9E%A2%E5%B9%95%E6%93%B7%E5%8F%96%E7%95%AB%E9%9D%A2%202026-11-15%20215459.png)
@@ -303,12 +293,7 @@ dots 你的全天候代理程式
 
 ## 實驗七 耦合振盪 (1).pdf
 
-- Category: 普物實驗
-- Course: 未提供
-- Video: 未提供
-- Chapter: 未提供
-- Tags: 耦合震盪
-- Description: 講義
+- Image ID: N/A
 - Original file: https://yuanting0117a.github.io/mason-learning-hub/files/1794922591264-1-%E5%AF%A6%E9%A9%97%E4%B8%83%20%E8%80%A6%E5%90%88%E6%8C%AF%E7%9B%AA%20%281%29.pdf
 - Raw source: https://raw.githubusercontent.com/yuanting0117a/mason-learning-hub/main/files/1794922591264-1-%E5%AF%A6%E9%A9%97%E4%B8%83%20%E8%80%A6%E5%90%88%E6%8C%AF%E7%9B%AA%20%281%29.pdf
 
@@ -573,12 +558,7 @@ m(g)
 
 ## 股票.txt
 
-- Category: 長久學習
-- Course: 未提供
-- Video: 未提供
-- Chapter: 未提供
-- Tags: 股票
-- Description: 新手股票遊戲練習
+- Image ID: N/A
 - Original file: https://yuanting0117a.github.io/mason-learning-hub/files/1794921801175-1-%E8%82%A1%E7%A5%A8.txt
 - Raw source: https://raw.githubusercontent.com/yuanting0117a/mason-learning-hub/main/files/1794921801175-1-%E8%82%A1%E7%A5%A8.txt
 
