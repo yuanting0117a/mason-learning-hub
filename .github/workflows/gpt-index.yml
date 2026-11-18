@@ -91,14 +91,9 @@ jobs:
               raw_url = "https://raw.githubusercontent.com/yuanting0117a/mason-learning-hub/main/" + encoded
               pages_url = "https://yuanting0117a.github.io/mason-learning-hub/" + encoded
               sections.extend([
-                  f"## {name}",
+                  (f"## {item.get('imageId')} — {name}" if item.get("imageId") else f"## {name}"),
                   "",
-                  f"- Category: {item.get('category', '未分類')}",
-                  f"- Course: {item.get('course', '') or '未提供'}",
-                  f"- Video: {item.get('videoTitle', '') or '未提供'}",
-                  f"- Chapter: {item.get('chapter', '') or '未提供'}",
-                  f"- Tags: {', '.join(item.get('tags', [])) or '無'}",
-                  f"- Description: {item.get('description', '') or '無'}",
+                  f"- Image ID: {item.get('imageId', 'N/A')}",
                   f"- Original file: {pages_url}",
                   f"- Raw source: {raw_url}",
               ])
