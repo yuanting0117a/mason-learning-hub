@@ -92,3 +92,5 @@ footer{display:flex;justify-content:space-between;gap:16px;margin-top:22px;font-
 /* v1.1.0 video screenshot metadata */
 .file-tags span{max-width:100%;overflow-wrap:anywhere}
 .upload-fields input:focus{border-color:#8da5c5;box-shadow:0 0 0 3px #dce7f5}
+
+.summary-links{display:flex;align-items:center;gap:16px;flex-wrap:wrap}.summary-links .manage-link:first-child{color:#315f91}
